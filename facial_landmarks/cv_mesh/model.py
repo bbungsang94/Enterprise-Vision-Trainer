@@ -2,10 +2,10 @@ import mediapipe as mp
 import cv2
 
 
-class FaceLandMarks():
+class FaceLandMarks:
     def __init__(self, staticMode=True,maxFace=1, minDetectionCon=0.5, minTrackCon=0.5):
         self.staticMode = staticMode
-        self.maxFace =  maxFace
+        self.maxFace = maxFace
         self.minDetectionCon = minDetectionCon
         self.minTrackCon = minTrackCon
 
@@ -25,10 +25,11 @@ class FaceLandMarks():
         if self.results.multi_face_landmarks:
             for faceLms in self.results.multi_face_landmarks:
                 if draw:
-                    self.mpDraw.draw_landmarks(img, faceLms, self.mpFaceMesh.FACEMESH_CONTOURS, self.drawSpec, self.drawSpec)
+                    self.mpDraw.draw_landmarks(img, faceLms, self.mpFaceMesh.FACEMESH_CONTOURS,
+                                               self.drawSpec, self.drawSpec)
 
                 face = []
-                for id, lm in enumerate(faceLms.landmark):
+                for _, lm in enumerate(faceLms.landmark):
                     # print(lm)
                     ih, iw, ic = img.shape
                     x, y = int(lm.x * iw), int(lm.y * ih)
@@ -36,4 +37,4 @@ class FaceLandMarks():
                     #print(id, x, y)
                     face.append([x,y])
                 faces.append(face)
-        return img, faces
+        return img, faces, self.results.multi_face_landmarks
