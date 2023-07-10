@@ -2,7 +2,8 @@ import os
 import cv2
 import open3d as o3d
 import numpy as np
-from utility.open3d_utils import get_clicked_point
+import pandas as pd
+from pins.pin import PinLoader
 from facial_landmarks.cv_mesh.run import inference as landmark_model
 from facial_landmarks.cv_mesh.model import FaceLandMarks
 
@@ -18,6 +19,8 @@ def make_3d_points(landmarks) -> list:
 
 
 def main(image_files):
+    pin_boxes = PinLoader.load_pins(path='./pins', filename='pin_info.json')
+    coord = o3d.geometry.TriangleMesh.create_coordinate_frame()
     for filename in image_files:
         image = cv2.imread(filename)
         landmark_result, inference_time = landmark_model(FaceLandMarks(), image)
@@ -30,6 +33,9 @@ def main(image_files):
         for face_point in points:
             pcd = o3d.geometry.PointCloud()
             pcd.points = o3d.utility.Vector3dVector(face_point)
+            dataframe = pd.DataFrame(face_point)
+            dataframe.to_csv('./landamrks.csv')
+
             pcd.paint_uniform_color([0, 0, 0])
 
             indices_eye = [133, 33, 159, 145, 382, 263, 386, 374]
@@ -42,13 +48,20 @@ def main(image_files):
             pcd_colors = np.asarray(pcd.colors)
             colors = np.array([color] * len(indices_to_color), dtype=np.float64)
             pcd_colors[indices_to_color] = colors
+
+            pcd.paint_uniform_color([0, 0, 0])
+            index_align = [10, 1]
+            color = [1, 0, 1]
+            colors = np.array([color] * len(index_align), dtype=np.float64)
+            pcd_colors = np.asarray(pcd.colors)
+            pcd_colors[index_align] = colors
             pcd.colors = o3d.utility.Vector3dVector(pcd_colors)  # Ensure pcd.colors is not None
 
-            coord = o3d.geometry.TriangleMesh.create_coordinate_frame()
+
             o3d.visualization.draw_geometries([pcd, coord])
             o3d.io.write_point_cloud('./base heads/inference.ply', pcd)
 
-            scene = o3d.io.read_triangle_model('./base heads/base_head.ply')
+            scene = o3d.io.read_triangle_model('./base heads/high poly head.obj')
             mesh = scene.meshes[0].mesh
             o3d.visualization.draw_geometries([mesh])
 
