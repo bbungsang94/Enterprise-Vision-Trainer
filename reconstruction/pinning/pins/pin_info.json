@@ -4,6 +4,13 @@
         "Types": ["str", "str", "str", "str", "int", "int"],
         "Titles": ["level1", "level2", "level3", "word_of_anatomy", "landmark_index", "basehead_index"]
     },
+    "Align": [
+        ["Center", "Upper", "Top", "Central forehead", 10, 262],
+        ["Center", "Lower", "Bottom", "Jaw", 152, -1],
+        ["Left", "Outer", "Center", "Zygomatic", 162, -1],
+        ["Right", "Outer", "Center", "Zygomatic", 389, -1],
+        ["Center", "Lower", "Center", "Nasal tip", 1, 5370]
+    ],
     "Eyes": [
         ["Left", "Inner", "Center", "Medinal canthus", 133, 11271],
         ["Left", "Outer", "Center", "Lateral canthus", 33, 11461],

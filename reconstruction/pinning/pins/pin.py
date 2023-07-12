@@ -12,7 +12,7 @@ class Pin:
         self.set_pin(**kwargs)
         self.__key = 'landmark'
 
-    def __switch_to(self, mode: str):
+    def switch_to(self, mode: str):
         if "land" in mode:
             self.__key = "landmark"
         else:
@@ -48,6 +48,9 @@ class PinBox:
 
     def append_pins(self, pins: List[Pin]):
         self._pins += pins
+
+    def __call__(self) -> List[int]:
+        return [x() for x in self._pins]
 
     def __getitem__(self, indices):
         return self._pins[indices]

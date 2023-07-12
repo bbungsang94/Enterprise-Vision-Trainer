@@ -1,6 +1,20 @@
 import open3d as o3d
 
 
+def draw_lines(points, lines=None):
+    if lines is None:
+        length = len(points)
+        lines = [[i, i + 1] for i in range(length - 1)]
+        lines.append([length - 1, 0])
+
+    colors = [[1, 0, 0] for i in range(len(lines))]
+    line_set = o3d.geometry.LineSet()
+    line_set.points = o3d.utility.Vector3dVector(points)
+    line_set.lines = o3d.utility.Vector2iVector(lines)
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+    return line_set
+
+
 def get_clicked_point(pcd):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
