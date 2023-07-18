@@ -26,7 +26,6 @@ def main(image_files):
         for face_point in points:
             aligner = Aligner(pin_boxes=pin_boxes, points=face_point)
             pcd = aligner.run_seq()
-            
 
 
 if __name__ == "__main__":
