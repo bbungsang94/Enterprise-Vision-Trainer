@@ -5,16 +5,7 @@ from model.align import Aligner
 from pins.pin import PinLoader
 from facial_landmarks.cv_mesh.run import inference as landmark_model
 from facial_landmarks.cv_mesh.model import FaceLandMarks
-
-
-def make_3d_points(landmarks) -> list:
-    batch = []
-    for faceLms in landmarks:
-        face = np.zeros((len(faceLms.landmark), 3))
-        for index, lm in enumerate(faceLms.landmark):
-            face[index, :] = [lm.x, lm.y, lm.z]
-        batch.append(face)
-    return batch
+from facial_landmarks.utility import make_3d_points
 
 
 def main(image_files):

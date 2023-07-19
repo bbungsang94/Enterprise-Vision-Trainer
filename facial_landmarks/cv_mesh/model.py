@@ -3,7 +3,7 @@ import cv2
 
 
 class FaceLandMarks:
-    def __init__(self, staticMode=True,maxFace=1, minDetectionCon=0.5, minTrackCon=0.5):
+    def __init__(self, staticMode=True, maxFace=1, minDetectionCon=0.5, minTrackCon=0.5):
         self.staticMode = staticMode
         self.maxFace = maxFace
         self.minDetectionCon = minDetectionCon

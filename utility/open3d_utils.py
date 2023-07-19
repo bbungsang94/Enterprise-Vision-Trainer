@@ -1,4 +1,5 @@
 import open3d as o3d
+import numpy as np
 
 
 def draw_lines(points, lines=None):
@@ -36,3 +37,4 @@ def get_clicked_point(pcd):
     vis.destroy_window()
 
     return point
+
