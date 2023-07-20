@@ -1,4 +1,7 @@
 import os
+import pandas as pd
+import torch
+import json
 from dataset import FLAEPDataset
 
 def single_shot():
@@ -12,12 +15,22 @@ def single_shot():
 
 
 def loop():
+    # Initialize
     dataset_root = r'D:\Creadto\Heritage\Dataset\GAN dataset'
-    # Dataset load
+
     with open(os.path.join(dataset_root, 'label.txt'), "r") as f:
         labels = f.readlines()
     labels = [label.replace('\n', '') for label in labels]
-    dataset = FLAEPDataset(labels=labels)
+    with open("./graph_info/edge_info.json", "r") as f:
+        edge_info = json.load(f)
+    edges = dict()
+    for key, value in edge_info.items():
+        edges[key] = pd.read_csv(value, header=None)
+        edges[key] = edges[key].to_numpy()
+        edges[key] = torch.tensor(edges[key], dtype=torch.long)
+
+    # Dataset load
+    dataset = FLAEPDataset(dataset_root=dataset_root, labels=labels, edge_info=edges)
     test = dataset[1]
     # DEA
     # Model definition
