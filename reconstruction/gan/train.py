@@ -1,3 +1,5 @@
+import os
+from dataset import FLAEPDataset
 
 def single_shot():
     # 이미지 생성하고
@@ -10,8 +12,19 @@ def single_shot():
 
 
 def loop():
+    dataset_root = r'D:\Creadto\Heritage\Dataset\GAN dataset'
+    # Dataset load
+    with open(os.path.join(dataset_root, 'label.txt'), "r") as f:
+        labels = f.readlines()
+    dataset = FLAEPDataset(labels=labels)
+    # DEA
+    # Model definition
+    # Dryrun model
+    # train loop
+    # evaluation
+    # utils-display, lod, checkpoints
     pass
 
 
 if __name__ is "__main__":
-    summary_device()
+    loop()

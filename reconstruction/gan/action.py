@@ -2,6 +2,8 @@ import pickle
 import os
 import pandas as pd
 import numpy as np
+import pyrender
+import matplotlib.pyplot as plt
 import torch
 from models.gender import MiVOLOClassifier
 from facial_landmarks.cv_mesh.model import FaceLandMarks
@@ -113,6 +115,20 @@ def label_dataset(root, actor: Actor):
     return labels
 
 
+def normalize_landmark(actor):
+    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0)
+    light = pyrender.DirectionalLight(color=[1.0, 1.0, 1.0], intensity=1.0)
+    with open(r"D:\Creadto\Heritage\Dataset\GAN dataset\label.txt", "r") as f:
+        while True:
+            line = f.readline()
+            file_name = line.split(' ')[0]
+            image = cv2.imread(os.path.join(r"D:\Creadto\Heritage\Dataset\GAN dataset", file_name))
+            result = actor.get_landmarks(image)
+
+            if not line: break
+            print(line)
+        f.close()
+
 def main():
     batch_size = 8
     actor = Actor(generate_path='../../generative_model/stylegan3/pretrained/stylegan3-r-ffhq-1024x1024.pkl',
@@ -120,7 +136,8 @@ def main():
                                'checkpoint': r'../../classification/mivolo/pretrained/model_imdb_cross_person_4.22_99.46.pth.tar',
                                'device_name': 'cuda:0'},
                   params={'batch_size': batch_size})
-    labels = label_dataset(root=r'D:\Creadto\Heritage\Dataset\GAN dataset\image', actor=actor)
+    normalize_landmark(actor)
+    # labels = label_dataset(root=r'D:\Creadto\Heritage\Dataset\GAN dataset\image', actor=actor)
 
 
 if __name__ == "__main__":
