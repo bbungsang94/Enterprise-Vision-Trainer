@@ -4,7 +4,7 @@ import pandas as pd
 from torchvision.io import read_image
 import os
 import torch
-import cv2
+from utility.monitoring import summary_graph
 
 
 class FLAEPDataset(Dataset):
@@ -22,4 +22,8 @@ class FLAEPDataset(Dataset):
         image = read_image(os.path.join(self.root, stub[0]), )
         points = pd.read_csv(os.path.join(self.root, stub[-1]))
         points = points.to_numpy()
-        x = torch.tensor([points], dtype=torch.float)
+        x = torch.tensor(points, dtype=torch.float)
+        for key, value in self.edges.items():
+            data = Data(x=x, edge_index=value.t().contiguous())
+            summary_graph(data, draw=True)
+            pass

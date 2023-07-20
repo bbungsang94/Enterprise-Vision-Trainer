@@ -1,11 +1,6 @@
 {
     "Outline": "graph_info/outline.csv",
-    "InnerLip": "graph_info/inner_lip.csv",
-    "OuterLip": "graph_info/outer_lip.csv",
-    "LeftBrrowUp": "graph_info/l_brrow_up.csv",
-    "RightBrrowUp": "graph_info/r_brrow_down.csv",
-    "LeftBrrowDown": "graph_info/l_brrow_down.csv",
-    "RightBrrowDown": "graph_info/r_brrow_up.csv",
-    "LeftEye": "graph_info/l_eye.csv",
-    "RightEye": "graph_info/r_eye.csv"
+    "Eyes": "graph_info/eyes.csv",
+    "Borrow": "graph_info/eyes.csv",
+    "Lips": "graph_info/lips.csv"
 }
