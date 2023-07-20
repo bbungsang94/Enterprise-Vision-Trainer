@@ -16,7 +16,9 @@ def loop():
     # Dataset load
     with open(os.path.join(dataset_root, 'label.txt'), "r") as f:
         labels = f.readlines()
+    labels = [label.replace('\n', '') for label in labels]
     dataset = FLAEPDataset(labels=labels)
+    test = dataset[1]
     # DEA
     # Model definition
     # Dryrun model
@@ -26,5 +28,5 @@ def loop():
     pass
 
 
-if __name__ is "__main__":
+if __name__ == "__main__":
     loop()
