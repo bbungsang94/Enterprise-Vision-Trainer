@@ -2,6 +2,9 @@ import torch
 import platform
 import psutil
 import pandas as pd
+import torch_geometric
+from torch_geometric.data import Data
+import networkx as nx
 
 
 def log_torch_usage(state_data: pd.DataFrame = None):
@@ -72,3 +75,23 @@ def summary_device():
     print(print_message(message='SangH.An@Creadto.com', padding=5, center=True))
     print(print_message(message='', line='='))
     return device
+
+
+def draw_graph(data: Data, unidirectional=False):
+    g = torch_geometric.utils.to_networkx(data, to_undirected=unidirectional)
+    nx.draw(g, with_labels=True)
+
+
+def summary_graph(graph: Data, draw=False):
+    print("=========SUMMARY GRAPH=========")
+    print("CUDA: ", graph.is_cuda, " Undirected: ", graph.is_undirected(), " Coalesced ", graph.is_coalesced())
+    print("=====Node:")
+    print("# of node:", graph.num_nodes, "# of node feature", graph.num_node_features)
+    print("node types: ", graph.num_node_types)
+    print("=====Edges:")
+    print("# of edges:", graph.num_edges, "# of edge feature", graph.num_edge_features)
+    print("node types: ", graph.num_edge_types)
+    print("=====Others:")
+
+    if draw:
+        draw_graph(graph)

@@ -42,7 +42,6 @@ class FLAME(nn.Module):
 
     def __init__(self, config):
         super(FLAME, self).__init__()
-        print("creating the FLAME Decoder")
         with open(config.flame_model_path, "rb") as f:
             self.flame_model = Struct(**pickle.load(f, encoding="latin1"))
         self.NECK_IDX = 1
@@ -303,34 +302,34 @@ def get_parser():
     parser.add_argument(
         "--flame_model_path",
         type=str,
-        default="./model/generic_model.pkl",
+        default="./models/pretrained/generic_model.pkl",
         help="flame model path",
     )
 
     parser.add_argument(
         "--static_landmark_embedding_path",
         type=str,
-        default="./model/flame_static_embedding.pkl",
+        default="./models/pretrained/flame_static_embedding.pkl",
         help="Static landmark embeddings path for FLAME",
     )
 
     parser.add_argument(
         "--dynamic_landmark_embedding_path",
         type=str,
-        default="./model/flame_dynamic_embedding.npy",
+        default="./models/pretrained/flame_dynamic_embedding.npy",
         help="Dynamic contour embedding path for FLAME",
     )
 
     # FLAME hyper-parameters
 
     parser.add_argument(
-        "--shape_params", type=int, default=100, help="the number of shape parameters"
+        "--shape_params", type=int, default=20, help="the number of shape parameters"
     )
 
     parser.add_argument(
         "--expression_params",
         type=int,
-        default=50,
+        default=10,
         help="the number of expression parameters",
     )
 
