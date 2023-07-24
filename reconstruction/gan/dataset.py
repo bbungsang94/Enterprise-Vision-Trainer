@@ -60,7 +60,7 @@ class FLAEPDataset(Dataset):
         normalize = torchvision.transforms.Normalize(mean, std)
         image = normalize(image)
 
-        points = pd.read_csv(os.path.join(self.root, stub[-1]))
+        points = pd.read_csv(os.path.join(self.root, stub[-1]), header=None)
         points = points.to_numpy()
         graphs = dict()
         for key, value in self.edges.items():
