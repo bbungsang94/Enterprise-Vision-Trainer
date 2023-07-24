@@ -9,6 +9,10 @@ from models.flame import FLAME, get_parser
 from utility.monitoring import summary_device
 from dataset import FLAEPDataset, FLAEPDataLoader
 from models.flaep import FLAEP
+from reconstruction.pinning.pins.pin import PinLoader
+from facial_landmarks.cv_mesh.align import Aligner
+import matplotlib.pyplot as plt
+
 
 def single_shot():
     # 이미지 생성하고
@@ -39,19 +43,47 @@ def visualize_output(vertices, faces, landmark):
         scene.add(joints_pcl)
         pyrender.Viewer(scene, use_raymond_lighting=True)
 
-def debug_loss(model_output, flame_output):
+
+def debug_loss(model_output, flame_output, aligner):
     for b in range(model_output.shape[0]):
-        label_landmark = model_output[b].detach()
-        model_landmark = flame_output[1][b].detach()
+        label_landmark = model_output[b].detach().cpu().numpy()
+        model_landmark = flame_output[1][b].detach().cpu().numpy()
 
-        label_min, _ = label_landmark.min(dim=0)
-        model_min, _ = model_landmark.min(dim=0)
+        # 점들을 scatter plot으로 시각화
+        aligner.update_points(label_landmark)
+        aligner.align_seq()
+        label_landmark = aligner.flip_seq()
 
-        label_max, _ = label_landmark.max(dim=0)
-        model_max, _ = model_landmark.max(dim=0)
-
+        label_min = label_landmark.min(axis=0)
+        model_min = model_landmark.min(axis=0)
+        label_max= label_landmark.max(axis=0)
+        model_max = model_landmark.max(axis=0)
         label_gap = label_max - label_min
         model_gap = model_max - model_min
+
+        # 0 - 1 scaling
+        label_landmark = (label_landmark - label_min) / label_gap
+        model_landmark = (model_landmark - model_min) / model_gap
+
+        # PointCloud 시각화
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+
+        ax.scatter(label_landmark[:, 0], label_landmark[:, 1], label_landmark[:, 2], c='r', marker='o', s=10)
+        ax.scatter(model_landmark[:, 0], 1.0 - model_landmark[:, 1], 1.0 - model_landmark[:, 2], c='b', marker='o',
+                   s=10)
+        # 축 범위 설정 (필요에 따라 적절하게 조정)
+        ax.set_xlim([0, 1])
+        ax.set_ylim([0, 1])
+        ax.set_zlim([0, 1])
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        plt.show()
+
+
 def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     # Initialize
     dataset_root = r'D:\Creadto\Heritage\Dataset\GAN dataset'
@@ -65,6 +97,7 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     for key, value in edge_info.items():
         edge = pd.read_csv(value, header=None)
         edges[key] = edge.to_numpy()
+    pin_boxes = PinLoader.load_pins(path='../pinning/pins', filename='pin_info.json')
 
     # Dataset load
     dataset = FLAEPDataset(dataset_root=dataset_root, labels=labels, edge_info=edges)
@@ -75,6 +108,7 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     gen_args.batch_size = batch_size
     generator = FLAME(config=gen_args)
     model = FLAEP()
+    pre_loss = Aligner(pin_boxes=pin_boxes)
     optimizer = torch.optim.Adadelta(model.parameters(), lr=learning_rate)
     # Dryrun model
     device = summary_device()
@@ -84,8 +118,8 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     images, graphs, landmarks = next(iter(loader))
     output = model(images, graphs)
     vertices, landmark = generator(**output)
-    #visualize_output(vertices=vertices, landmark=landmark, faces=generator.faces)
-    debug_loss(landmarks, (vertices, landmark))
+    # visualize_output(vertices=vertices, landmark=landmark, faces=generator.faces)
+    debug_loss(landmarks, (vertices, landmark), pre_loss)
     print(output)
     # train loop
     best_accuracy = 0.0

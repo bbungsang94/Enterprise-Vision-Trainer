@@ -1,7 +1,6 @@
 import os
 import cv2
-import numpy as np
-from model.align import Aligner
+from facial_landmarks.cv_mesh.align import Aligner
 from pins.pin import PinLoader
 from facial_landmarks.cv_mesh.run import inference as landmark_model
 from facial_landmarks.cv_mesh.model import FaceLandMarks

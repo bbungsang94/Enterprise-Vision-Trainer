@@ -6,14 +6,18 @@ import open3d as o3d
 
 
 class Aligner:
-    def __init__(self, pin_boxes, points):
+    def __init__(self, pin_boxes, points=None):
         self._pin_boxes = pin_boxes
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points)
-        pcd.paint_uniform_color([0, 0, 0])
         self._pcd = pcd
+        if points:
+            self.update_points(points)
 
-    def run_seq(self):
+    def update_points(self, points):
+        self._pcd.points = o3d.utility.Vector3dVector(points)
+        self._pcd.paint_uniform_color([0, 0, 0])
+
+    def align_seq(self):
         align_box = self._pin_boxes['Align']
         # y 얼라인
         self._pcd = self.align_xyz(pins=[align_box[2], align_box[3]], pivot=1)
@@ -21,15 +25,20 @@ class Aligner:
         self._pcd = self.align_xyz(pins=[align_box[1], align_box[0]], pivot=0)
         # z 얼라인
         self._pcd = self.align_xyz(pins=[align_box[2], align_box[3]], pivot=2)
+        return self.get_points()
 
+    def flip_seq(self):
+        align_box = self._pin_boxes['Align']
         points = self.get_points()
         head_point = copy.deepcopy(points[align_box[0](), [1, 2]])
         jaw_point = copy.deepcopy(points[align_box[1](), [1, 2]])
         # flip
         if head_point[0] < jaw_point[0]:
             self._pcd = self.flip_yz()
+        return self.get_points()
 
-        # offset
+    def offset_seq(self):
+        align_box = self._pin_boxes['Align']
         points = self.get_points()
         nose_tip = align_box[-1]
         center_point = copy.deepcopy(points[nose_tip()])
@@ -37,8 +46,15 @@ class Aligner:
         center_point[2] = min_bound[2]
         points -= center_point
         self._pcd.points = o3d.utility.Vector3dVector(points)
-        self.show_pcds(True, self._pcd)
-        return self._pcd
+        return self.get_points()
+
+    def run_seq(self, show=False):
+        self.align_seq()
+        self.flip_seq()
+        self.offset_seq()
+        if show:
+            self.show_pcds(True, self._pcd)
+        return self.get_points()
 
     def get_points(self):
         return np.asarray(self._pcd.points)
