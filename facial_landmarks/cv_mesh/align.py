@@ -11,9 +11,13 @@ class Aligner:
         pcd = o3d.geometry.PointCloud()
         self._pcd = pcd
         if points:
-            self.update_points(points)
+            self.update_points(points, "landmark")
 
-    def update_points(self, points):
+    def update_points(self, points, mode):
+        for key, pin_box in self._pin_boxes.items():
+            pin_box.switch_mode(mode)
+            self._pin_boxes[key] = pin_box
+        self._pcd = o3d.geometry.PointCloud()
         self._pcd.points = o3d.utility.Vector3dVector(points)
         self._pcd.paint_uniform_color([0, 0, 0])
 
@@ -22,7 +26,7 @@ class Aligner:
         # y 얼라인
         self._pcd = self.align_xyz(pins=[align_box[2], align_box[3]], pivot=1)
         # x 얼라인
-        self._pcd = self.align_xyz(pins=[align_box[1], align_box[0]], pivot=0)
+        self._pcd = self.align_xyz(pins=[align_box[0], align_box[1]], pivot=0)
         # z 얼라인
         self._pcd = self.align_xyz(pins=[align_box[2], align_box[3]], pivot=2)
         return self.get_points()
@@ -31,10 +35,13 @@ class Aligner:
         align_box = self._pin_boxes['Align']
         points = self.get_points()
         head_point = copy.deepcopy(points[align_box[0](), [1, 2]])
-        jaw_point = copy.deepcopy(points[align_box[1](), [1, 2]])
+        jaw_point = copy.deepcopy(points[align_box[1](), 1])
+        nose_point = copy.deepcopy(points[align_box[-1](), 2])
         # flip
-        if head_point[0] < jaw_point[0]:
-            self._pcd = self.flip_yz()
+        if head_point[0] < jaw_point:
+            self._pcd = self.flip_xyz(pivot=2)
+        if head_point[1] < nose_point:
+            self._pcd = self.flip_xyz(pivot=1)
         return self.get_points()
 
     def offset_seq(self):
@@ -70,10 +77,14 @@ class Aligner:
         self._pcd.colors = o3d.utility.Vector3dVector(pcd_colors)  # Ensure pcd.colors is not None
         self.show_pcds(True, self._pcd, lines)
 
-    def flip_yz(self):
+    def flip_xyz(self, pivot):
+        rot_xyz = np.array([0, 0, 0], dtype=np.float)
+        rot_xyz[pivot] = 1
+        rot_xyz *= np.pi
+
         # Align test z축
         aligned = copy.deepcopy(self._pcd)
-        r = aligned.get_rotation_matrix_from_xyz((0, np.pi, np.pi))
+        r = aligned.get_rotation_matrix_from_xyz(tuple(rot_xyz))
         aligned.rotate(r)
         return aligned
 

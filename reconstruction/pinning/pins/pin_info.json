@@ -2,46 +2,46 @@
     "Form":
     {
         "Types": ["str", "str", "str", "str", "int", "int"],
-        "Titles": ["level1", "level2", "level3", "word_of_anatomy", "landmark_index", "basehead_index", "68point_index"]
+        "Titles": ["level1", "level2", "level3", "word_of_anatomy", "landmark_index", "basehead_index", "points68_index"]
     },
     "Align": [
-        ["Center", "Upper", "Top", "Central forehead", 10, 262],
-        ["Center", "Lower", "Bottom", "Jaw", 152, -1],
-        ["Left", "Outer", "Center", "Zygomatic", 162, -1],
-        ["Right", "Outer", "Center", "Zygomatic", 389, -1],
-        ["Center", "Lower", "Center", "Nasal tip", 1, 5370]
+        ["Center", "Upper", "Top", "Central forehead", 10, 262, 27],
+        ["Center", "Lower", "Bottom", "Jaw", 152, -1, 8],
+        ["Left", "Outer", "Center", "Zygomatic", 162, -1, 16],
+        ["Right", "Outer", "Center", "Zygomatic", 389, -1, 0],
+        ["Center", "Lower", "Center", "Nasal tip", 1, 5370, 33]
     ],
     "Eyes": [
-        ["Left", "Inner", "Center", "Medinal canthus", 133, 11271],
-        ["Left", "Outer", "Center", "Lateral canthus", 33, 11461],
-        ["Left", "Upper", "Center", "Upper eyelid", 159, 3882],
-        ["Left", "Lower", "Center", "Lower eyelid", 1145, 11339],
-        ["Right", "Inner", "Center", "Medinal canthus", 382, 11064],
-        ["Right", "Outer", "Center", "Lateral canthus", 263, 11043],
-        ["Right", "Upper", "Center", "Upper eyelid", 386, 1350],
-        ["Right", "Lower", "Center", "Lower eyelid", 374, 11040]
+        ["Left", "Inner", "Center", "Medinal canthus", 133, 11271, 39],
+        ["Left", "Outer", "Center", "Lateral canthus", 33, 11461, 36],
+        ["Left", "Upper", "Center", "Upper eyelid", 159, 3882, 37],
+        ["Left", "Lower", "Center", "Lower eyelid", 145, 11339, 41],
+        ["Right", "Inner", "Center", "Medinal canthus", 382, 11064, 42],
+        ["Right", "Outer", "Center", "Lateral canthus", 263, 11043, 45],
+        ["Right", "Upper", "Center", "Upper eyelid", 386, 1350, 44],
+        ["Right", "Lower", "Center", "Lower eyelid", 374, 11040, 46]
     ],
     "Nose": [
-        ["Center", "Lower", "Center", "Nasal tip", 1, 5370],
-        ["Left", "Lower", "Center", "Left ala", 129, 6031],
-        ["Right", "Lower", "Center", "Right ala", 358, 5535]
+        ["Center", "Lower", "Center", "Nasal tip", 1, 5370, 33],
+        ["Left", "Lower", "Center", "Left ala", 129, 6031, 31],
+        ["Right", "Lower", "Center", "Right ala", 358, 5535, 35]
     ],
     "Lip": [
-        ["Left", "Outer", "Center", "Left commissure", 61, 9173],
-        ["Right", "Outer", "Center", "Right commissure",291, 7039],
-        ["Center", "Inner", "Top", "Superior lip", 13, 7446],
-        ["Center", "Inner", "Bottom", "Inferior lip", 14, 7088],
-        ["Center", "Outer", "Top", "Cupid's bow", 0, 7373],
-        ["Center", "Outer", "Bottom", "Lower vermilion border", 16, 6830]
+        ["Left", "Outer", "Center", "Left commissure", 61, 9173, 48],
+        ["Right", "Outer", "Center", "Right commissure",291, 7039, 54],
+        ["Center", "Inner", "Top", "Superior lip", 13, 7446, 62],
+        ["Center", "Inner", "Bottom", "Inferior lip", 14, 7088, 66],
+        ["Center", "Outer", "Top", "Cupid's bow", 0, 7373, 51],
+        ["Center", "Outer", "Bottom", "Lower vermilion border", 16, 6830, 57]
     ],
     "Eyebrow": [
-        ["Left", "Inner", "Top", "Inner corner", 107, -1],
-        ["Left", "Inner", "Bottom", "Inner corner", 55, -1],
-        ["Left", "Outer", "Top", "Tail", 70, -1],
-        ["Left", "Outer", "Bottom", "Tail", 46, -1],
-        ["Right", "Inner", "Top", "Inner corner", 336, -1],
-        ["Right", "Inner", "Bottom", "Inner corner", 285, -1],
-        ["Right", "Outer", "Top", "Tail", 300, -1],
-        ["Right", "Outer", "Bottom", "Tail", 276, -1]
+        ["Left", "Inner", "Top", "Inner corner", 107, -1, 21],
+        ["Left", "Inner", "Bottom", "Inner corner", 55, -1, 21],
+        ["Left", "Outer", "Top", "Tail", 70, -1, 18],
+        ["Left", "Outer", "Bottom", "Tail", 46, -1, 18],
+        ["Right", "Inner", "Top", "Inner corner", 336, -1, 22],
+        ["Right", "Inner", "Bottom", "Inner corner", 285, -1, 22],
+        ["Right", "Outer", "Top", "Tail", 300, -1, 26],
+        ["Right", "Outer", "Bottom", "Tail", 276, -1, 26]
     ]
 }

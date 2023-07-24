@@ -1,3 +1,4 @@
+import copy
 import os
 import pandas as pd
 import torch
@@ -44,44 +45,147 @@ def visualize_output(vertices, faces, landmark):
         pyrender.Viewer(scene, use_raymond_lighting=True)
 
 
-def debug_loss(model_output, flame_output, aligner):
+def fit_output(model_output, flame_output, aligner, vis=False):
     for b in range(model_output.shape[0]):
         label_landmark = model_output[b].detach().cpu().numpy()
         model_landmark = flame_output[1][b].detach().cpu().numpy()
 
-        # 점들을 scatter plot으로 시각화
-        aligner.update_points(label_landmark)
-        aligner.align_seq()
-        label_landmark = aligner.flip_seq()
-
         label_min = label_landmark.min(axis=0)
         model_min = model_landmark.min(axis=0)
-        label_max= label_landmark.max(axis=0)
+        label_max = label_landmark.max(axis=0)
         model_max = model_landmark.max(axis=0)
         label_gap = label_max - label_min
         model_gap = model_max - model_min
 
-        # 0 - 1 scaling
-        label_landmark = (label_landmark - label_min) / label_gap
-        model_landmark = (model_landmark - model_min) / model_gap
+        model_landmark = model_max - model_landmark
 
-        # PointCloud 시각화
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
+        # # 0 - 1 scaling
+        # label_landmark = 2 * ((label_landmark - label_min) / label_gap)
+        # model_landmark = 2 * ((model_landmark - model_min) / model_gap)
+        #
+        # model_landmark = 2 - model_landmark
+        # label_landmark = label_landmark - 1
+        # model_landmark = model_landmark - 1
 
-        ax.scatter(label_landmark[:, 0], label_landmark[:, 1], label_landmark[:, 2], c='r', marker='o', s=10)
-        ax.scatter(model_landmark[:, 0], 1.0 - model_landmark[:, 1], 1.0 - model_landmark[:, 2], c='b', marker='o',
-                   s=10)
-        # 축 범위 설정 (필요에 따라 적절하게 조정)
-        ax.set_xlim([0, 1])
-        ax.set_ylim([0, 1])
-        ax.set_zlim([0, 1])
+        # 점들을 scatter plot으로 시각화
+        aligner.update_points(label_landmark, 'landmark')
+        aligner.align_seq()
+        label_landmark = aligner.offset_seq()
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        aligner.update_points(model_landmark, 'points68')
+        aligner.align_seq()
+        model_landmark = aligner.offset_seq()
+        if vis:
+            # PointCloud 시각화
+            fig = plt.figure(figsize=(8, 8))
+            ax = fig.add_subplot(111, projection='3d')
 
-        plt.show()
+            ax.scatter(label_landmark[:, 0], label_landmark[:, 1], label_landmark[:, 2], c='r', marker='o', s=10)
+            ax.scatter(model_landmark[:, 0], model_landmark[:, 1], model_landmark[:, 2], c='b', marker='o',
+                       s=10)
+            # 축 범위 설정 (필요에 따라 적절하게 조정)
+            ax.set_xlim([-1, 1])
+            ax.set_ylim([-1, 1])
+            ax.set_zlim([-1, 1])
+
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_zlabel('Z')
+
+            plt.show()
+
+        return model_landmark, label_landmark
+
+
+def draw_pinbox(output, truth, pin_boxes):
+    import open3d as o3d
+    pcd1 = o3d.geometry.PointCloud()
+    pcd1.points = o3d.utility.Vector3dVector(output)
+    pcd1.paint_uniform_color([0, 0, 0])
+
+    pcd2 = o3d.geometry.PointCloud()
+    pcd2.points = o3d.utility.Vector3dVector(truth)
+    pcd2.paint_uniform_color([0, 0, 0])
+    pcd2 = pcd2.translate((0, 1, 0))
+
+    align_box = pin_boxes['Align']
+    eyes_box = pin_boxes['Eyes']
+    nose_box = pin_boxes['Nose']
+    lip_box = pin_boxes['Lip']
+    eyebrow_box = pin_boxes['Eyebrow']
+
+    o3d.visualization.draw_geometries([pcd1, pcd2])
+
+
+
+def FLAEP_loss(output, truth, pin_boxes):
+    draw_pinbox(output, truth, pin_boxes)
+    modes = {'landmark': truth, 'points68': output}
+    losses = dict()
+    for mode, points in modes.items():
+        loss = dict()
+        for key, box in pin_boxes.items():
+            box.switch_mode(mode)
+            pin_boxes[key] = box
+
+        eyes_box = pin_boxes['Eyes']
+        nose_box = pin_boxes['Nose']
+        lip_box = pin_boxes['Lip']
+        eyebrow_box = pin_boxes['Eyebrow']
+
+        # 코 중심, 턱 끝
+        nose_tip = points[nose_box()[0]]
+        jaw_tip = points[pin_boxes['Align']()[1]]
+        # 눈, 입 정보
+        eyes_points = points[eyes_box()]
+        lip_points = points[lip_box()]
+        eyebrow_points = points[eyebrow_box()]
+
+        # 코 중심으로부터의 턱 아래의 거리 - 입이 벌려진 높이
+        lip_height = np.linalg.norm(lip_points[2] - lip_points[3])
+        base = np.linalg.norm(jaw_tip - nose_tip) - lip_height
+
+        # 입의 벌린 정도, 입의 길이
+        loss['Lip_C_H'] = lip_height / base
+        lip_width = np.linalg.norm(lip_points[0] - lip_points[1])
+        loss['Lip_C_W'] = lip_width / base
+
+        # 눈의 높이(2, 3), 길이(0, 1)
+        l_e_width = np.linalg.norm(eyes_points[1] - eyes_points[0])
+        loss['Eye_L_W'] = l_e_width / base
+        l_e_height = np.linalg.norm(eyes_points[2] - eyes_points[3])
+        loss['Eye_L_H'] = l_e_height / base
+        r_e_width = np.linalg.norm(eyes_points[5] - eyes_points[4])
+        loss['Eye_R_W'] = r_e_width / base
+        r_e_height = np.linalg.norm(eyes_points[6] - eyes_points[7])
+        loss['Eye_R_H'] = r_e_height / base
+
+        # 코 중심으로부터의 눈가 거리
+        dist = np.linalg.norm(eyes_points[0] - nose_tip)
+        loss['Eye_L_I'] = dist / base
+        dist = np.linalg.norm(eyes_points[1] - nose_tip)
+        loss['Eye_L_O'] = dist / base
+        dist = np.linalg.norm(eyes_points[4] - nose_tip)
+        loss['Eye_R_I'] = dist / base
+        dist = np.linalg.norm(eyes_points[5] - nose_tip)
+        loss['Eye_R_O'] = dist / base
+
+        # 코 중심으로부터의 입 양 끝 거리
+        dist = np.linalg.norm(lip_points[0] - nose_tip)
+        loss['Lip_L_I'] = dist / base
+        dist = np.linalg.norm(lip_points[1] - nose_tip)
+        loss['Lip_R_O'] = dist / base
+        # 코 중심으로부터의 눈썹의 거리
+        dist = np.linalg.norm(eyebrow_points[1] - nose_tip)
+        loss['EB_L_I'] = dist / base
+        dist = np.linalg.norm(eyebrow_points[3] - nose_tip)
+        loss['EB_L_O'] = dist / base
+        dist = np.linalg.norm(eyebrow_points[5] - nose_tip)
+        loss['EB_R_I'] = dist / base
+        dist = np.linalg.norm(eyebrow_points[7] - nose_tip)
+        loss['EB_R_O'] = dist / base
+        losses[mode] = copy.deepcopy(loss)
+    return losses
 
 
 def loop(batch_size=4, epochs=300, learning_rate=1e-3):
@@ -119,7 +223,8 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     output = model(images, graphs)
     vertices, landmark = generator(**output)
     # visualize_output(vertices=vertices, landmark=landmark, faces=generator.faces)
-    debug_loss(landmarks, (vertices, landmark), pre_loss)
+    y_pred, y_true = fit_output(landmarks, (vertices, landmark), pre_loss, True)
+    losses = FLAEP_loss(y_pred, y_true, pin_boxes)
     print(output)
     # train loop
     best_accuracy = 0.0

@@ -9,29 +9,36 @@ class Pin:
         self.categories = []
         self.landmark_index = 0
         self.basehaed_index = 0
+        self.points68_index = 0
         self.set_pin(**kwargs)
         self.__key = 'landmark'
 
     def switch_to(self, mode: str):
         if "land" in mode:
             self.__key = "landmark"
-        else:
+        elif "base" in mode:
             self.__key = "basehead"
+        else:
+            self.__key = "68points"
+        return self.__key
 
     def __call__(self) -> int:
         if self.__key == "landmark":
             return self.landmark_index
-        else:
+        elif self.__key == "basehead":
             return self.basehaed_index
+        else:
+            return self.points68_index
 
     def set_pin(self, level1: str, level2: str, level3: str,
                 word_of_anatomy: str,
-                landmark_index: int, basehead_index: int):
+                landmark_index: int, basehead_index: int, points68_index: int):
 
         self.name = word_of_anatomy
         self.categories = [level1, level2, level3]
         self.landmark_index = landmark_index
         self.basehaed_index = basehead_index
+        self.points68_index = points68_index
 
 
 class PinBox:
@@ -48,6 +55,9 @@ class PinBox:
 
     def append_pins(self, pins: List[Pin]):
         self._pins += pins
+
+    def switch_mode(self, mode: str):
+        return [x.switch_to(mode) for x in self._pins]
 
     def __call__(self) -> List[int]:
         return [x() for x in self._pins]
