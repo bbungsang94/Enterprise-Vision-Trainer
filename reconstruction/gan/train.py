@@ -261,11 +261,13 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     print(loss_sum)
 
     best_accuracy = 0.0
-    pbar = tqdm(range(epochs), desc='Epoch', position=0)
+    pbar = tqdm(loader, desc='Epoch', position=0)
     dataframe = pd.DataFrame(columns=['epoch', 'tick', 'shape', 'expression', 'jaw'])
-    for tick in pbar:
+    for tick in range(epochs):
         running_loss = {'shape': 0.0, 'expression': 0.0, "jaw": 0.0}
-        for i, (images, graphs, landmarks) in enumerate(loader):
+        for i, (images, graphs, landmarks) in enumerate(pbar):
+            if len(images) != batch_size:
+                continue
             optimizer.zero_grad()
             output = model(images, graphs)
             vertices, landmark = generator(**output)
@@ -288,9 +290,12 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
                 series = pd.Series(running_loss)
                 dataframe = pd.concat([dataframe.T, series], axis=1).T
                 dataframe.to_csv('./train_log.csv')
-
+            if i % 10000 == 0:
+                now = datetime.now()
+                now_str = now.strftime('%Y-%m-%d %H%M%S') + '.pth'
+                torch.save(model.state_dict(), os.path.join(r'./checkpoints', now_str))
         now = datetime.now()
-        now_str = now.strftime('%Y-%m-%d %H:%M:%S') + '.pth'
+        now_str = now.strftime('%Y-%m-%d %H%M%S') + '.pth'
         torch.save(model.state_dict(), os.path.join(r'./checkpoints', now_str))
     # evaluation
     # utils-display, lod, checkpoints
