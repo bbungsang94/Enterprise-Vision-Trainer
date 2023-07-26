@@ -12,7 +12,7 @@ from models.flame import FLAME, get_parser
 from utility.monitoring import summary_device
 from dataset import FLAEPDataset, FLAEPDataLoader
 from models.flaep import FLAEP
-from reconstruction.pinning.pins.pin import PinLoader
+from contents.reconstruction.pinning.pins.pin import PinLoader
 from facial_landmarks.cv_mesh.align import Aligner
 import matplotlib.pyplot as plt
 
@@ -223,7 +223,7 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     with open(os.path.join(dataset_root, 'label.txt'), "r") as f:
         labels = f.readlines()
     labels = [label.replace('\n', '') for label in labels]
-    with open("./graph_info/edge_info.json", "r") as f:
+    with open("graph_info/edge_info.json", "r") as f:
         edge_info = json.load(f)
     edges = dict()
     for key, value in edge_info.items():
@@ -293,10 +293,10 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
             if i % 10000 == 0:
                 now = datetime.now()
                 now_str = now.strftime('%Y-%m-%d %H%M%S') + '.pth'
-                torch.save(model.state_dict(), os.path.join(r'./checkpoints', now_str))
+                torch.save(model.state_dict(), os.path.join(r'checkpoints', now_str))
         now = datetime.now()
         now_str = now.strftime('%Y-%m-%d %H%M%S') + '.pth'
-        torch.save(model.state_dict(), os.path.join(r'./checkpoints', now_str))
+        torch.save(model.state_dict(), os.path.join(r'checkpoints', now_str))
     # evaluation
     # utils-display, lod, checkpoints
     pass

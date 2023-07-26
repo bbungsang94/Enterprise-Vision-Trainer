@@ -8,7 +8,7 @@ from facial_landmarks.utility import make_3d_points
 
 
 def main(image_files):
-    pin_boxes = PinLoader.load_pins(path='./pins', filename='pin_info.json')
+    pin_boxes = PinLoader.load_pins(path='pins', filename='pin_info.json')
     for filename in image_files:
         image = cv2.imread(filename)
         landmark_result, inference_time = landmark_model(FaceLandMarks(), image)
