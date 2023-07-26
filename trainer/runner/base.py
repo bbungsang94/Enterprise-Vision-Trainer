@@ -25,6 +25,7 @@ class Base(metaclass=ABCMeta):
         self._optimizer = optimizer
         self._params = params
 
+        # base
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         self._writer = SummaryWriter('runs/fashion_trainer_{}'.format(timestamp))
         self.name = 'base'
@@ -37,6 +38,11 @@ class Base(metaclass=ABCMeta):
     def activate_sanity(self):
         pass
 
-    def save_model(self, prefix=''):
-        timeline = prefix + datetime.now().strftime('%Y%m%d_%H%M%S') + '.pth'
-        torch.save(self._model.state_dict(), os.path.join(r'checkpoints', timeline))
+    def save_model(self, epoch: int, tick: int, prefix=''):
+        full_path = os.path.join(self._params['path']['check_point'], "%08d" % epoch, "%08d" % tick)
+        timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
+        torch.save(self._model.state_dict(), os.path.join(full_path, timeline))
+
+    def load_model(self, full_path):
+        weights = torch.load(full_path)
+        self._model.load_state_dict(weights)
