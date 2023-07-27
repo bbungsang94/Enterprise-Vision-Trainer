@@ -1,3 +1,5 @@
+import inspect
+
 import torch
 import platform
 import psutil
@@ -18,24 +20,17 @@ def log_torch_usage(state_data: pd.DataFrame = None):
     return state_data
 
 
-def summary_device():
-    def print_message(message: str, width=60, line='-', center=False, padding=0):
-        text = ''
-        msg_len = len(message)
-        line_len = width - msg_len - 2 * padding
-        if line_len < 0:
-            assert "Invalid width size(" + str(width) + "), message length is " + str(msg_len + 2 * padding)
-        if center:
-            text += line * (line_len // 2)
-            text += ' ' * padding + message + ' ' * padding
-            text += line * (line_len // 2)
-            if line_len % 2 == 1:
-                text += line
-        else:
-            text += ' ' * padding + message + ' ' * padding
-            text += line * line_len
-        return text
+def get_return_variable_count(func):
+    signature = inspect.signature(func)
+    return len(signature.return_annotation)
 
+
+def get_input_variable_count(func):
+    signature = inspect.signature(func)
+    return len(signature.parameters)
+
+
+def summary_device():
     # Write OS information
     print(print_message(message='', line='='))
     print(print_message(message='Operation System', padding=3, center=True, line=''))
@@ -95,3 +90,21 @@ def summary_graph(graph: Data, draw=False):
 
     if draw:
         draw_graph(graph)
+
+
+def print_message(message: str, width=60, line='-', center=False, padding=0):
+    text = ''
+    msg_len = len(message)
+    line_len = width - msg_len - 2 * padding
+    if line_len < 0:
+        assert "Invalid width size(" + str(width) + "), message length is " + str(msg_len + 2 * padding)
+    if center:
+        text += line * (line_len // 2)
+        text += ' ' * padding + message + ' ' * padding
+        text += line * (line_len // 2)
+        if line_len % 2 == 1:
+            text += line
+    else:
+        text += ' ' * padding + message + ' ' * padding
+        text += line * line_len
+    return text
