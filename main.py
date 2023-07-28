@@ -1,17 +1,39 @@
-import inspect
-from typing import Tuple
+import os
+import torch
+from torch import optim, nn
+from torchvision import models, datasets
+from torch.utils.data import random_split
+from trainer.utility.io import read_json, ModuleLoader
+from trainer.runner import REGISTRY as RUNNER
+from trainer.viewer import REGISTRY as VIEWER
 
+if __name__ == "__main__":
+    config_root = './trainer/config'
+    parameter = read_json(os.path.join(config_root, 'default.json'))
+    module_loader = ModuleLoader(root=config_root, params=read_json(os.path.join(config_root, parameter['address'])))
 
-def example_function() -> (int, int, int):
-    return 1, 2, 3
+    dataset = module_loader.get_module('dataset', base=datasets)
+    dataset_size = len(dataset)
+    train_size = int(dataset_size * module_loader.params['task']['train_ratio'])
+    eval_size = dataset_size - train_size
 
-def get_return_variable_count(func):
-    signature = inspect.signature(func)
-    return len(signature.return_annotation)
+    train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
+    train_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=train_dataset)
+    eval_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=eval_dataset)
+    loss = module_loader.get_module('loss', base=nn)
+    model = module_loader.get_module('model', base=models)
+    optimizer = module_loader.get_module('optimizer', base=optim, params=model.parameters())
 
-# 예시 함수를 호출하여 반환 변수의 개수를 확인합니다.
-result = example_function()
-return_variable_count = get_return_variable_count(example_function)
+    args = module_loader.get_args('viewer', module_loader.params['modules']['viewer'])
+    viewer = VIEWER[module_loader.params['modules']['viewer']](**args)
 
-print("함수의 반환 변수 개수:", return_variable_count)
-print("함수의 반환 값:", result)
+    runner = RUNNER[module_loader.params['modules']['runner']](
+        loaders=(train_loader, eval_loader),
+        model=model,
+        loss=loss,
+        optimizer=optimizer,
+        params=module_loader.params,
+        viewer=viewer
+    )
+
+    runner.loop()

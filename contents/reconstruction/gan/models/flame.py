@@ -302,21 +302,24 @@ def get_parser():
     parser.add_argument(
         "--flame_model_path",
         type=str,
-        default="./models/pretrained/generic_model.pkl",
+        default=r"D:\Creadto\Utilities\Enterprise-Vision-Trainer\contents\reconstruction\gan\models\pretrained"
+                r"\generic_model.pkl",
         help="flame model path",
     )
 
     parser.add_argument(
         "--static_landmark_embedding_path",
         type=str,
-        default="./models/pretrained/flame_static_embedding.pkl",
+        default=r"D:\Creadto\Utilities\Enterprise-Vision-Trainer\contents\reconstruction\gan\models\pretrained"
+                r"\flame_static_embedding.pkl",
         help="Static landmark embeddings path for FLAME",
     )
 
     parser.add_argument(
         "--dynamic_landmark_embedding_path",
         type=str,
-        default="./models/pretrained/flame_dynamic_embedding.npy",
+        default=r"D:\Creadto\Utilities\Enterprise-Vision-Trainer\contents\reconstruction\gan\models\pretrained"
+                r"\flame_dynamic_embedding.npy",
         help="Dynamic contour embedding path for FLAME",
     )
 

@@ -12,7 +12,7 @@ from models.flame import FLAME, get_parser
 from utility.monitoring import summary_device
 from dataset import FLAEPDataset, FLAEPDataLoader
 from models.flaep import FLAEP
-from contents.reconstruction.pinning.pins.pin import PinLoader
+from contents import PinLoader
 from facial_landmarks.cv_mesh.align import Aligner
 import matplotlib.pyplot as plt
 

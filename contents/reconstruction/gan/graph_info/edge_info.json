@@ -1,6 +1,6 @@
 {
-    "Outline": "graph_info/outline.csv",
-    "Eyes": "graph_info/eyes.csv",
-    "Borrow": "graph_info/borrow.csv",
-    "Lips": "graph_info/lips.csv"
+    "Outline": "outline.csv",
+    "Eyes": "eyes.csv",
+    "Borrow": "borrow.csv",
+    "Lips": "lips.csv"
 }
