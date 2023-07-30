@@ -75,6 +75,8 @@ class FLAEP(nn.Module):
 
     def forward(self, x) -> [torch.tensor]:
         image, graphs = x
+        if len(image) != self.generator.batch_size:
+            return None
         if next(self.parameters()).is_cuda:
             image = image.to(torch.device("cuda"))
             for key, graph in graphs.items():

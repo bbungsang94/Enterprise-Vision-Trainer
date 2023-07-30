@@ -36,8 +36,10 @@ class SingleGPURunner(Base):
         for i, data in enumerate(progress):
             inputs, labels = data
 
-            self._optimizer.zero_grad()
             outputs = self._model(inputs)
+            if outputs is None:
+                continue
+            self._optimizer.zero_grad()
             if not isinstance(labels, torch.Tensor):
                 loss = self._loss(outputs[0], labels[0].to(self.device))
                 for itr in range(1, len(labels)):
