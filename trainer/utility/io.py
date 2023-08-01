@@ -23,6 +23,21 @@ def replace_values(source, target):
     return source
 
 
+def make_dir(path):
+    if os.path.exists(path) is False:
+        dir_q = []
+        sub_path = path
+        while True:
+            directory, folder = os.path.split(sub_path)
+            sub_path = directory
+            dir_q.append(folder)
+            if os.path.exists(directory):
+                for target in reversed(dir_q):
+                    sub_path = os.path.join(sub_path, target)
+                    os.mkdir(os.path.join(sub_path))
+                break
+
+
 class ModuleLoader:
     def __init__(self, root, params):
         self._root = root
@@ -58,18 +73,7 @@ class ModuleLoader:
 class CSVWriter:
     def __init__(self, path):
         self.save_folder = path
-        if os.path.exists(path) is False:
-            dir_q = []
-            sub_path = path
-            while True:
-                directory, folder = os.path.split(sub_path)
-                sub_path = directory
-                dir_q.append(folder)
-                if os.path.exists(directory):
-                    for target in reversed(dir_q):
-                        sub_path = os.path.join(sub_path, target)
-                        os.mkdir(os.path.join(sub_path))
-                    break
+        make_dir(path)
         self.datum = dict()
 
     def add_scalars(self, column, data, **kwargs):

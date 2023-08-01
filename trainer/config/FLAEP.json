@@ -1,8 +1,7 @@
 {
     "path": {
         "checkpoint": "./output/checkpoint",
-        "log": "./output/log",
-        "resume": false
+        "log": "./output/log"
     },
     "modules": {
         "runner": "SingleGPU",
@@ -17,7 +16,8 @@
         "model_name": "FLAEPv1",
         "save_interval": 1,
         "log_interval": 5000,
-        "train_ratio": 0.7
+        "train_ratio": 0.7,
+        "resume": true
     },
     "hyperparameters": {
         "epochs": 300,

@@ -27,7 +27,25 @@ class SingleGPURunner(Base):
                                   'Iter': kwargs['tick']})
         self._writer.flush()
 
-    def _run_single_epoch(self, index, progress):
+    def _run_eval_epoch(self, index, progress):
+        running_loss = 0.
+        with torch.no_grad():
+            for i, data in enumerate(progress):
+                inputs, labels = data
+                outputs = self._model(inputs)
+                if outputs is None:
+                    continue
+                if not isinstance(labels, torch.Tensor):
+                    loss = self._loss(outputs[0], labels[0].to(self.device))
+                    for itr in range(1, len(labels)):
+                        loss += self._loss(outputs[itr], labels[itr].to(self.device))
+                else:
+                    loss = self._loss(outputs, labels.to(self.device))
+                running_loss += loss.item()
+            avg_loss = running_loss / (i + 1)
+            return avg_loss
+
+    def _run_train_epoch(self, index, progress):
         running_loss = 0.
         avg_loss = 0
         mode = progress.desc
