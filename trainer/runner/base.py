@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from tqdm import tqdm
 from datetime import datetime
 from typing import Optional, Dict, Tuple
@@ -69,7 +70,7 @@ class Base(metaclass=ABCMeta):
             epoch = max(epochs)
             ticks = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
             ticks = [int(x) for x in ticks]
-            #tick = max(ticks) 지금은 방법이 없음..
+            # tick = max(ticks) 지금은 방법이 없음..
             tick = 0
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
             model_file = os.listdir(full_path)[0]
@@ -95,10 +96,17 @@ class Base(metaclass=ABCMeta):
         weights = torch.load(full_path)
         self._model.load_state_dict(weights)
 
-    def loop(self):
-        self._check_sanity()
-        self._viewer.show()
+    def _decorate(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            self._check_sanity()
+            self._viewer.show()
+            func(*args, **kwargs)
+            self._viewer.summary()
+        return wrapper
 
+    @_decorate
+    def loop(self) -> None:
         outer_pbar = tqdm(range(*self._params['task']['itr']),
                           desc='Outer progress is created', position=0, leave=True)
 
@@ -126,7 +134,6 @@ class Base(metaclass=ABCMeta):
             self._writer.flush()
 
             line = "avg_loss(train): %.4f, avg_loss(eval): %.4f, epoch: %06d" % (train_mu, eval_mu, epoch)
-            #outer_pbar.set_description(line)
+            # outer_pbar.set_description(line)
             print(line)
 
-        self._viewer.summary()

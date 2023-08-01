@@ -21,6 +21,7 @@ class Open3dViewer(Base):
     def summary(self):
         pass
 
+    @staticmethod
     def image_to_pcd(self, image: np.ndarray, scale=1.0, depth_offset=0) -> Type[PointCloud] | None:
         # image는 x, y, color
         # z는 offset
