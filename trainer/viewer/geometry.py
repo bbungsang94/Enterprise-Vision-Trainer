@@ -13,6 +13,7 @@ class Open3dViewer(Base):
         self.platform = 'Open3D'
 
     def show(self, **kwargs):
+
         pass
 
     def save(self):
@@ -22,7 +23,7 @@ class Open3dViewer(Base):
         pass
 
     @staticmethod
-    def image_to_pcd(self, image: np.ndarray, scale=1.0, depth_offset=0) -> Type[PointCloud] | None:
+    def image_to_pcd(image: np.ndarray, scale=1.0, depth_offset=0) -> Type[PointCloud] | None:
         # image는 x, y, color
         # z는 offset
         channel, row_len, column_len = image.shape
