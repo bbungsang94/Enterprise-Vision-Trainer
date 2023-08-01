@@ -13,8 +13,28 @@ class Open3dViewer(Base):
         self.platform = 'Open3D'
 
     def show(self, **kwargs):
+        images = kwargs['image']
+        vertices = kwargs['vertices']
+        faces = kwargs['faces']
 
-        pass
+        for i in range(len(images)):
+            vis = o3d.visualization.Visualizer()
+            vis.create_window()
+
+            mesh = o3d.geometry.TriangleMesh
+            mesh.vertices = o3d.utility.Vector3dVector(vertices[i])
+            mesh.triangles = o3d.utility.Vector3dVector(faces[i])
+            background = self.convert_to_pcd(images[i])
+            vis.add_geometry(mesh)
+            vis.add_geometry(background)
+            vis.update_geometry()
+            vis.poll_events()
+            vis.update_renderer()
+
+            if kwargs['save']:
+                vis.capture_screen_image(kwargs['save_path'])
+
+            vis.destroy_window()
 
     def save(self):
         pass
@@ -23,7 +43,7 @@ class Open3dViewer(Base):
         pass
 
     @staticmethod
-    def image_to_pcd(image: np.ndarray, scale=1.0, depth_offset=0) -> Type[PointCloud] | None:
+    def convert_to_pcd(image: np.ndarray, scale=1.0, depth_offset=0) -> Type[PointCloud] | None:
         # image는 x, y, color
         # z는 offset
         channel, row_len, column_len = image.shape
