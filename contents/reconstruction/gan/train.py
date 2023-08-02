@@ -11,7 +11,7 @@ from datetime import datetime
 from models.flame import FLAME, get_parser
 from utility.monitoring import summary_device
 from dataset import FLAEPDataset, FLAEPDataLoader
-from models.flaep import FLAEP
+from models.flaep import FLAEPv1
 from contents import PinLoader
 from facial_landmarks.cv_mesh.align import Aligner
 import matplotlib.pyplot as plt
@@ -239,7 +239,7 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
     gen_args = get_parser()
     gen_args.batch_size = batch_size
     generator = FLAME(config=gen_args)
-    model = FLAEP()
+    model = FLAEPv1()
     pre_loss = Aligner(pin_boxes=pin_boxes)
     loss = torch.nn.L1Loss()
     optimizer = torch.optim.Adadelta(model.parameters(), lr=learning_rate)

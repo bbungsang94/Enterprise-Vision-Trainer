@@ -10,9 +10,9 @@ class Base(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save(self):
+    def save(self, **kwargs):
         pass
 
     @abstractmethod
-    def summary(self):
+    def summary(self, **kwargs):
         pass

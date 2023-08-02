@@ -4,16 +4,15 @@
         "log": "./output/log"
     },
     "modules": {
-        "runner": "FLAEPVisualize",
+        "runner": "SingleGPU",
         "dataset": "FLAEP",
         "loader": "FLAEP",
         "model": "FLAEP",
         "loss": "FLAEP",
         "optimizer": "FLAEP",
-        "viewer": "Open3D"
+        "viewer": "FLAEP"
     },
     "task": {
-        "model_name": "FLAEPv1",
         "save_interval": 1,
         "log_interval": 5000,
         "train_ratio": 0.7,

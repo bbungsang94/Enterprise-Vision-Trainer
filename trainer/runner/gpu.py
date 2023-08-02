@@ -41,6 +41,7 @@ class SingleGPURunner(Base):
                 else:
                     loss = self._loss(outputs, labels.to(self.device))
                 running_loss += loss.item()
+
             avg_loss = running_loss / (i + 1)
             return avg_loss
 
@@ -69,9 +70,14 @@ class SingleGPURunner(Base):
 
             running_loss += loss.item()
             if i % self._params['task']['log_interval'] == self._params['task']['log_interval'] - 1:
-                save_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % index, "%08d" % i)
+                save_path = os.path.join(self._params['path']['checkpoint'],
+                                         self.model_name, "%08d" % index, "%08d" % i)
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
+
+                # vertices, landmarks = self._model.sub_module(inputs)
+                # self._viewer.save(image=inputs[0], vertices=vertices,
+                #                   faces=self._model.generator.faces, text=loss.item(), save_path=save_path)
                 avg_loss = running_loss / self._params['task']['log_interval']  # loss per batch
                 self._write_log(epoch=index, tick=i, loss=avg_loss, mode=mode)
                 self._save_model(index, i)

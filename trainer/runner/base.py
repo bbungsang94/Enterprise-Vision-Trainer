@@ -72,19 +72,23 @@ class Base(metaclass=ABCMeta):
         if self._params['task']['resume']:
             print(print_message(message='Resume Process', padding=3, center=True, line='-'))
             epochs = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name))
-            epochs = [int(x) for x in epochs]
-            epoch = max(epochs)
-            ticks = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
-            ticks = [int(x) for x in ticks]
-            # tick = max(ticks) 지금은 방법이 없음..
-            tick = 0
-            full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
-            model_file = os.listdir(full_path)[0]
-            self._load_model(os.path.join(full_path, model_file))
-            print(print_message(message='Epoch: ' + str(epoch), padding=2))
-            print(print_message(message='Tick: ' + str(tick), padding=2))
-            print(print_message(message='Model Name: ' + model_file, padding=2))
-            start = epoch
+            if len(epochs) == 0:
+                print("'\033[91m" + "Not found: can't find checkpoints of this model. Canceled the resuming" + "\033[0m")
+                start = 0
+            else:
+                epochs = [int(x) for x in epochs]
+                epoch = max(epochs)
+                ticks = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
+                ticks = [int(x) for x in ticks]
+                # tick = max(ticks) 지금은 방법이 없음..
+                tick = 0
+                full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
+                model_file = os.listdir(full_path)[0]
+                self._load_model(os.path.join(full_path, model_file))
+                print(print_message(message='Epoch: ' + str(epoch), padding=2))
+                print(print_message(message='Tick: ' + str(tick), padding=2))
+                print(print_message(message='Model Name: ' + model_file, padding=2))
+                start = epoch
         else:
             start = 0
         self._params['task']['itr'] = [start, self._params['hyperparameters']['epochs']]

@@ -48,6 +48,7 @@ class ModuleLoader:
     def __init__(self, root, params):
         self._root = root
         self.params = params
+        self.params['task']['model_name'] = self.params['modules']['model']
 
     def get_module(self, kind, base, **kwargs):
         key = self.params['modules'][kind]

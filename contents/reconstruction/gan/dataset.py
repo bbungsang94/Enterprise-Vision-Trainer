@@ -27,13 +27,15 @@ class FLAEPDataLoader(DataLoader):
         batch_images = []
         batch_shape = []
         batch_expression = []
+        batch_gender = []
         batch_jaw = []
 
         for stub in batch:
             batch_images.append(stub[0])
-            batch_shape.append(stub[2])
-            batch_expression.append(stub[3])
-            batch_jaw.append(stub[4])
+            batch_gender.append(stub[2])
+            batch_shape.append(stub[3])
+            batch_expression.append(stub[4])
+            batch_jaw.append(stub[5])
 
         for key in g_dict.keys():
             data_list = []
@@ -45,7 +47,7 @@ class FLAEPDataLoader(DataLoader):
         batch_shape = torch.stack(batch_shape, dim=0)
         batch_expression = torch.stack(batch_expression, dim=0)
         batch_jaw = torch.stack(batch_jaw, dim=0)
-        return (torch.stack(batch_images, dim=0), batch_graph), [batch_shape, batch_expression, batch_jaw]
+        return (torch.stack(batch_images, dim=0), batch_graph, batch_gender), [batch_shape, batch_expression, batch_jaw]
 
 
 class FLAEPDataset(Dataset):
@@ -75,7 +77,7 @@ class FLAEPDataset(Dataset):
         stub = line.split(' ')
         image = read_image(os.path.join(self.root, stub[0])).type(torch.FloatTensor)
         mean, std = image.mean(), image.std()
-
+        gender = stub[1]
         normalize = torchvision.transforms.Normalize(mean, std)
         image = normalize(image)
 
@@ -98,7 +100,7 @@ class FLAEPDataset(Dataset):
                         edge_index=torch.tensor(value[:, -2:], dtype=torch.long).t().contiguous())
             graphs[key] = copy.deepcopy(data)
         shape, expression, jaw = self.calc_distance(torch.FloatTensor(points))
-        return image, graphs, shape, expression, jaw
+        return image, graphs, gender, shape, expression, jaw
 
     def calc_distance(self, landmark, mode='landmark'):
         for key, box in self.pin_boxes.items():

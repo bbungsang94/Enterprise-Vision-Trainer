@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import timm
 import torch.nn as nn
@@ -11,11 +10,8 @@ from contents.reconstruction.pinning.pins.pin import PinLoader
 class FLAEP(nn.Module):
     def __init__(self, pin, batch_size):
         super().__init__()
-        self.pin_boxes = PinLoader.load_pins(path=pin, filename='pin_info.json')
-
-        gen_args = get_parser()
-        gen_args.batch_size = batch_size
-        self.generator = FLAME(config=gen_args)
+        self.pin_calculator = PinLossCalculator(pin=pin)
+        self.generator = FLAMESet(batch_size=batch_size)
 
         # output: batch, 1280
         self.latent_model = timm.create_model('mobilenetv3_large_100', pretrained=True, num_classes=0)
@@ -52,13 +48,6 @@ class FLAEP(nn.Module):
                                  nn.Linear(1152 // 16, 3),
                                  nn.Tanh())
 
-        neck_head = nn.Sequential(nn.Linear(1152, 1152 // 8),
-                                  nn.Tanh(),
-                                  nn.Linear(1152 // 8, 1152 // 16),
-                                  nn.Tanh(),
-                                  nn.Linear(1152 // 16, 3),
-                                  nn.Tanh())
-
         self.Bodies = nn.ModuleDict(
             {
                 'Residual': residual_module,
@@ -69,12 +58,11 @@ class FLAEP(nn.Module):
                 'ShapeHead': shape_head,
                 'ExpHead': expression_head,
                 'JawHead': jaw_head,
-                'NeckHead': neck_head
             }
         )
 
     def sub_module(self, x) -> [torch.tensor]:
-        image, graphs = x
+        image, graphs, gender = x
         if len(image) != self.generator.batch_size:
             return None
         if next(self.parameters()).is_cuda:
@@ -103,49 +91,16 @@ class FLAEP(nn.Module):
         expression = self.Bodies['ExpHead'](expression)
         jaw = self.Bodies['JawHead'](rot)
         jaw = torch.cat([torch.zeros(num_graph, 3, device=jaw.device), jaw], dim=1)
-        neck = self.Bodies['NeckHead'](rot)
 
-        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw, 'neck_pose': None}
-        return self.generator(**output)
+        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw}
+        return self.generator(genders=gender, **output)
 
     def forward(self, x) -> [torch.tensor]:
-        image, graphs = x
-        if len(image) != self.generator.batch_size:
-            return None
-        if next(self.parameters()).is_cuda:
-            image = image.to(torch.device("cuda"))
-            for key, graph in graphs.items():
-                graph = graph.to(torch.device("cuda"))
-                graphs[key] = graph
-        latent_space = self.latent_model(image)
-        res_latent = self.Bodies['Residual'](latent_space)
-
-        num_graph = graphs['Outline'].num_graphs
-        outline = self.Bodies['Outline'](graphs['Outline'])
-        outline = outline.view(num_graph, -1)
-        eyes = self.Bodies['Eyes'](graphs['Eyes'])
-        eyes = eyes.view(num_graph, -1)
-        borrow = self.Bodies['Borrow'](graphs['Borrow'])
-        borrow = borrow.view(num_graph, -1)
-        lips = self.Bodies['Lips'](graphs['Lips'])
-        lips = lips.view(num_graph, -1)
-
-        shape = torch.cat([res_latent, lips, eyes, outline], dim=1)
-        expression = torch.cat([res_latent, lips, borrow], dim=1)
-        rot = torch.cat([res_latent, lips, outline], dim=1)
-
-        shape = self.Bodies['ShapeHead'](shape)
-        expression = self.Bodies['ExpHead'](expression)
-        jaw = self.Bodies['JawHead'](rot)
-        jaw = torch.cat([torch.zeros(num_graph, 3, device=jaw.device), jaw], dim=1)
-        neck = self.Bodies['NeckHead'](rot)
-
-        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw, 'neck_pose': neck}
-        _, landmark = self.generator(**output)
+        _, landmarks = self.sub_module(x)
         s, e, j = None, None, None
-        batch_size = len(landmark)
+        batch_size = len(landmarks)
         for b in range(0, batch_size):
-            s1, e1, j1 = self.calc_distance(landmark[b])
+            s1, e1, j1 = self.pin_calculator.calculate(landmarks[b])
             if b == 0:
                 s, e, j = s1, e1, j1
             else:
@@ -155,7 +110,57 @@ class FLAEP(nn.Module):
 
         return s.view(batch_size, -1), e.view(batch_size, -1), j.view(batch_size, -1)
 
-    def calc_distance(self, landmark, mode='points68'):
+
+class GCNFlaep(nn.Module):
+    def __init__(self, in_channel, out_channel):
+        super().__init__()
+        self.model = Sequential('x, edge_index',
+                                [(GCNConv(in_channels=in_channel, out_channels=8),
+                                  'x=x, edge_index=edge_index -> x'),
+                                 nn.LeakyReLU(),
+                                 (GCNConv(in_channels=8, out_channels=16),
+                                  'x=x, edge_index=edge_index -> x'),
+                                 nn.LeakyReLU(),
+                                 nn.Dropout(),
+                                 (GCNConv(in_channels=16, out_channels=out_channel),
+                                  'x=x, edge_index=edge_index -> x'),
+                                 nn.LeakyReLU(),
+                                 nn.Dropout(),
+                                 ])
+
+    def forward(self, x):
+        return self.model(x.x, x.edge_index)
+
+
+class FLAMESet(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        gen_args = get_parser()
+        self.batch_size = kwargs['batch_size']
+        gen_args.batch_size = self.batch_size
+        gen_args.flame_model_path = gen_args.flame_model_path.replace('generic', 'male')
+        male = FLAME(config=gen_args)
+        gen_args.flame_model_path = gen_args.flame_model_path.replace('male', 'female')
+        female = FLAME(config=gen_args)
+        self.model = nn.ModuleDict({'male': male, 'female': female})
+        self.faces = male.faces
+
+    def forward(self, genders, **kwargs):
+        vertices, landmarks = self.model['male'](**kwargs)
+        female_vertices, female_landmarks = self.model['female'](**kwargs)
+
+        for i, sex in enumerate(genders):
+            if sex == "female":
+                vertices[i] = female_vertices[i]
+                landmarks[i] = female_landmarks[i]
+        return vertices, landmarks
+
+
+class PinLossCalculator:
+    def __init__(self, pin):
+        self.pin_boxes = PinLoader.load_pins(path=pin, filename='pin_info.json')
+
+    def calculate(self, landmark, mode='points68'):
         for key, box in self.pin_boxes.items():
             box.switch_mode(mode)
             self.pin_boxes[key] = box
@@ -225,26 +230,5 @@ class FLAEP(nn.Module):
         return shape, expression, jaw
 
 
-class GCNFlaep(nn.Module):
-    def __init__(self, in_channel, out_channel):
-        super().__init__()
-        self.model = Sequential('x, edge_index',
-                                [(GCNConv(in_channels=in_channel, out_channels=8),
-                                  'x=x, edge_index=edge_index -> x'),
-                                 nn.LeakyReLU(),
-                                 (GCNConv(in_channels=8, out_channels=16),
-                                  'x=x, edge_index=edge_index -> x'),
-                                 nn.LeakyReLU(),
-                                 nn.Dropout(),
-                                 (GCNConv(in_channels=16, out_channels=out_channel),
-                                  'x=x, edge_index=edge_index -> x'),
-                                 nn.LeakyReLU(),
-                                 nn.Dropout(),
-                                 ])
-
-    def forward(self, x):
-        return self.model(x.x, x.edge_index)
-
-
 if __name__ == "__main__":
-    test = FLAEP()
+    test = FLAEPv1()
