@@ -1,10 +1,8 @@
 import os
 import copy
 import json
-from datetime import datetime
-
+import shutil
 import pandas as pd
-
 from contents import REGISTRY as MODULES
 
 
@@ -36,6 +34,14 @@ def make_dir(path):
                     sub_path = os.path.join(sub_path, target)
                     os.mkdir(os.path.join(sub_path))
                 break
+
+
+def clean_folder(path):
+    folders = os.listdir(path)
+    for folder in folders:
+        files = os.listdir(os.path.join(path, folder))
+        if len(files) <= 1:
+            shutil.rmtree(os.path.join(path, folder))
 
 
 class ModuleLoader:

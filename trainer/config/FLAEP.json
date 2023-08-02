@@ -4,7 +4,7 @@
         "log": "./output/log"
     },
     "modules": {
-        "runner": "SingleGPU",
+        "runner": "FLAEPVisualize",
         "dataset": "FLAEP",
         "loader": "FLAEP",
         "model": "FLAEP",

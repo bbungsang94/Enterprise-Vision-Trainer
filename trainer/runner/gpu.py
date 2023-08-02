@@ -8,7 +8,6 @@ class SingleGPURunner(Base):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.name = 'SingleGPURunner'
-        self.device = None
 
     def _check_sanity(self):
         super()._check_sanity()

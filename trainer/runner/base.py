@@ -36,6 +36,12 @@ class Base(metaclass=ABCMeta):
         self.name = 'base'
         self.model_name = self._params['task']['model_name']
 
+        # device
+        self.device = torch.device("cpu")
+
+        # inner
+        self.__loop = self.loop
+
     @abstractmethod
     def _run_train_epoch(self, index, progress):
         pass
@@ -96,17 +102,9 @@ class Base(metaclass=ABCMeta):
         weights = torch.load(full_path)
         self._model.load_state_dict(weights)
 
-    def _decorate(self, func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            self._check_sanity()
-            self._viewer.show()
-            func(*args, **kwargs)
-            self._viewer.summary()
-        return wrapper
-
-    @_decorate
     def loop(self) -> None:
+        self._check_sanity()
+        self._viewer.show()
         outer_pbar = tqdm(range(*self._params['task']['itr']),
                           desc='Outer progress is created', position=0, leave=True)
 
@@ -136,4 +134,4 @@ class Base(metaclass=ABCMeta):
             line = "avg_loss(train): %.4f, avg_loss(eval): %.4f, epoch: %06d" % (train_mu, eval_mu, epoch)
             # outer_pbar.set_description(line)
             print(line)
-
+        self._viewer.summary()

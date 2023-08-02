@@ -73,6 +73,41 @@ class FLAEP(nn.Module):
             }
         )
 
+    def sub_module(self, x) -> [torch.tensor]:
+        image, graphs = x
+        if len(image) != self.generator.batch_size:
+            return None
+        if next(self.parameters()).is_cuda:
+            image = image.to(torch.device("cuda"))
+            for key, graph in graphs.items():
+                graph = graph.to(torch.device("cuda"))
+                graphs[key] = graph
+        latent_space = self.latent_model(image)
+        res_latent = self.Bodies['Residual'](latent_space)
+
+        num_graph = graphs['Outline'].num_graphs
+        outline = self.Bodies['Outline'](graphs['Outline'])
+        outline = outline.view(num_graph, -1)
+        eyes = self.Bodies['Eyes'](graphs['Eyes'])
+        eyes = eyes.view(num_graph, -1)
+        borrow = self.Bodies['Borrow'](graphs['Borrow'])
+        borrow = borrow.view(num_graph, -1)
+        lips = self.Bodies['Lips'](graphs['Lips'])
+        lips = lips.view(num_graph, -1)
+
+        shape = torch.cat([res_latent, lips, eyes, outline], dim=1)
+        expression = torch.cat([res_latent, lips, borrow], dim=1)
+        rot = torch.cat([res_latent, lips, outline], dim=1)
+
+        shape = self.Bodies['ShapeHead'](shape)
+        expression = self.Bodies['ExpHead'](expression)
+        jaw = self.Bodies['JawHead'](rot)
+        jaw = torch.cat([torch.zeros(num_graph, 3, device=jaw.device), jaw], dim=1)
+        neck = self.Bodies['NeckHead'](rot)
+
+        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw, 'neck_pose': None}
+        return self.generator(**output)
+
     def forward(self, x) -> [torch.tensor]:
         image, graphs = x
         if len(image) != self.generator.batch_size:
