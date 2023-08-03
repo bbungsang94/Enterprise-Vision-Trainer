@@ -20,7 +20,7 @@
     },
     "hyperparameters": {
         "epochs": 300,
-        "batch_size": 4,
+        "batch_size": 16,
         "shuffle": true,
         "lr": 1e-3
     }

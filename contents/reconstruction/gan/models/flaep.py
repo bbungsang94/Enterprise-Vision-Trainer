@@ -96,7 +96,11 @@ class FLAEP(nn.Module):
         return self.generator(genders=gender, **output)
 
     def forward(self, x) -> [torch.tensor]:
-        _, landmarks = self.sub_module(x)
+        y = self.sub_module(x)
+        if y is None:
+            return None
+        else:
+            _, landmarks = y
         s, e, j = None, None, None
         batch_size = len(landmarks)
         for b in range(0, batch_size):
