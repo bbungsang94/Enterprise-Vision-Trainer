@@ -1,0 +1,42 @@
+{
+    "path": {
+        "checkpoint": "./output/checkpoint",
+        "log": "./output/log"
+    },
+    "modules": {
+        "runner": "SingleGPU",
+        "dataset": "FLAEP",
+        "loader": "FLAEP",
+        "model": "FLAEP",
+        "loss": "FLAEP",
+        "optimizer": "FLAEP",
+        "viewer": "FLAEP"
+    },
+    "task": {
+        "save_interval": 1,
+        "log_interval": 1000,
+        "train_ratio": 0.7,
+        "num_samples": 25,
+        "resume": true
+    },
+    "hyperparameters": {
+        "epochs": 6,
+        "batch_size": 16,
+        "gradient_accumulate_every": 1,
+        "augment_horizontal_flip": true,
+        "train_num_steps": 100000,
+        "ema_update_every":10,
+        "ema_decay": 0.995,
+        "adam_betas": [0.9, 0.99],
+        "amp": false,
+        "shuffle": true,
+        "mixed_precision_type": "fp16",
+        "split_batches": true,
+        "convert_image_to": null,
+        "calculate_fid": true,
+        "inception_block_idx": 2048,
+        "max_grad_norm": 1.0,
+        "num_fid_samples": 50000,
+        "lr": 1e-3
+    }
+}

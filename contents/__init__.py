@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from contents.reconstruction.gan.dataset import FLAEPDataset, FLAEPDataLoader
 from contents.reconstruction.gan.models.flaep import FLAEP
+from contents.generative_model.ddpm.model import Unet
 
 
 def get_dataset_fn(dataset, **kwargs) -> Dataset:
@@ -20,5 +21,6 @@ def get_model_fn(model, **kwargs) -> nn.Module:
 REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'FLAEPloader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
             'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
-            'FLAEPmodel': partial(get_model_fn, model=FLAEP)
+            'FLAEPmodel': partial(get_model_fn, model=FLAEP),
+            'DDPMmodel': partial(get_model_fn, model=Unet)
             }
