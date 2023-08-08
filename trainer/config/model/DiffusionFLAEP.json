@@ -4,6 +4,23 @@
     "model_path": ".dad_checkpoints/dad_3dheads.trcd",
     "stride": 4,
     "img_size": 256,
+    "FLAME": {
+        "root": "D:\Creadto\Utilities\Enterprise-Vision-Trainer\contents\reconstruction\gan\models\pretrained",
+        "flame_model_path": "generic_model.pkl",
+        "static_landmark_embedding_path": "flame_static_embedding.pkl",
+        "dynamic_landmark_embedding_path": "flame_dynamic_embedding.npy",
+        "shape_params": 100,
+        "expression_params": 100,
+        "pose_params": 20,
+        "use_face_contour": true,
+        "use_3D_translation": true,
+        "optimize_eyeballpose": true,
+        "optimize_neckpose": true,
+        "num_worker": 4,
+        "batch_size": 8,
+        "ring_margin": 0.5,
+        "ring_loss_weight": 1.0
+    },
     "3DMM":
     {
         "shape": 300,

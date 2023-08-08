@@ -49,10 +49,7 @@ class FLAME(nn.Module):
         self.dtype = torch.float32
         self.use_face_contour = config.use_face_contour
         self.faces = self.flame_model.f
-        self.register_buffer(
-            "faces_tensor",
-            to_tensor(to_np(self.faces, dtype=np.int64), dtype=torch.long),
-        )
+        self.register_buffer("faces_tensor", to_tensor(to_np(self.faces, dtype=np.int64), dtype=torch.long))
 
         # Fixing remaining Shape betas
         # There are total 300 shape parameters to control FLAME; But one can use the first few parameters to express
@@ -69,46 +66,26 @@ class FLAME(nn.Module):
         # Fixing remaining expression betas
         # There are total 100 shape expression parameters to control FLAME; But one can use the first few parameters to express
         # the expression. For example 50 expression parameters are used for RingNet project
-        default_exp = torch.zeros(
-            [self.batch_size, 100 - config.expression_params],
-            dtype=self.dtype,
-            requires_grad=False,
-        )
-        self.register_parameter(
-            "expression_betas", nn.Parameter(default_exp, requires_grad=False)
-        )
+        default_exp = torch.zeros([self.batch_size, 100 - config.expression_params],
+                                  dtype=self.dtype, requires_grad=False)
+        self.register_parameter("expression_betas", nn.Parameter(default_exp, requires_grad=False))
 
         # Eyeball and neck rotation
-        default_eyball_pose = torch.zeros(
-            [self.batch_size, 6], dtype=self.dtype, requires_grad=False
-        )
-        self.register_parameter(
-            "eye_pose", nn.Parameter(default_eyball_pose, requires_grad=False)
-        )
+        default_eyball_pose = torch.zeros([self.batch_size, 6], dtype=self.dtype, requires_grad=False)
+        self.register_parameter("eye_pose", nn.Parameter(default_eyball_pose, requires_grad=False))
 
-        default_neck_pose = torch.zeros(
-            [self.batch_size, 3], dtype=self.dtype, requires_grad=False
-        )
-        self.register_parameter(
-            "neck_pose", nn.Parameter(default_neck_pose, requires_grad=False)
-        )
+        default_neck_pose = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
+        self.register_parameter("neck_pose", nn.Parameter(default_neck_pose, requires_grad=False))
 
         # Fixing 3D translation since we use translation in the image plane
 
         self.use_3D_translation = config.use_3D_translation
 
-        default_transl = torch.zeros(
-            [self.batch_size, 3], dtype=self.dtype, requires_grad=False
-        )
-        self.register_parameter(
-            "transl", nn.Parameter(default_transl, requires_grad=False)
-        )
+        default_transl = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
+        self.register_parameter("transl", nn.Parameter(default_transl, requires_grad=False))
 
         # The vertices of the template model
-        self.register_buffer(
-            "v_template",
-            to_tensor(to_np(self.flame_model.v_template), dtype=self.dtype),
-        )
+        self.register_buffer("v_template", to_tensor(to_np(self.flame_model.v_template), dtype=self.dtype))
 
         # The shape components
         shapedirs = self.flame_model.shapedirs
@@ -128,9 +105,7 @@ class FLAME(nn.Module):
         parents[0] = -1
         self.register_buffer("parents", parents)
 
-        self.register_buffer(
-            "lbs_weights", to_tensor(to_np(self.flame_model.weights), dtype=self.dtype)
-        )
+        self.register_buffer("lbs_weights", to_tensor(to_np(self.flame_model.weights), dtype=self.dtype))
 
         # Static and Dynamic Landmark embeddings for FLAME
 
@@ -138,34 +113,20 @@ class FLAME(nn.Module):
             static_embeddings = Struct(**pickle.load(f, encoding="latin1"))
 
         lmk_faces_idx = (static_embeddings.lmk_face_idx).astype(np.int64)
-        self.register_buffer(
-            "lmk_faces_idx", torch.tensor(lmk_faces_idx, dtype=torch.long)
-        )
+        self.register_buffer("lmk_faces_idx", torch.tensor(lmk_faces_idx, dtype=torch.long))
         lmk_bary_coords = static_embeddings.lmk_b_coords
-        self.register_buffer(
-            "lmk_bary_coords", torch.tensor(lmk_bary_coords, dtype=self.dtype)
-        )
+        self.register_buffer("lmk_bary_coords", torch.tensor(lmk_bary_coords, dtype=self.dtype))
 
         if self.use_face_contour:
-            conture_embeddings = np.load(
-                config.dynamic_landmark_embedding_path,
-                allow_pickle=True,
-                encoding="latin1",
-            )
+            conture_embeddings = np.load(config.dynamic_landmark_embedding_path, allow_pickle=True, encoding="latin1")
             conture_embeddings = conture_embeddings[()]
-            dynamic_lmk_faces_idx = np.array(conture_embeddings["lmk_face_idx"]).astype(
-                np.int64
-            )
-            dynamic_lmk_faces_idx = torch.tensor(
-                dynamic_lmk_faces_idx, dtype=torch.long
-            )
+            dynamic_lmk_faces_idx = np.array(conture_embeddings["lmk_face_idx"]).astype(np.int64)
+            dynamic_lmk_faces_idx = torch.tensor(dynamic_lmk_faces_idx, dtype=torch.long)
             self.register_buffer("dynamic_lmk_faces_idx", dynamic_lmk_faces_idx)
 
             dynamic_lmk_bary_coords = conture_embeddings["lmk_b_coords"]
             dynamic_lmk_bary_coords = np.array(dynamic_lmk_bary_coords)
-            dynamic_lmk_bary_coords = torch.tensor(
-                dynamic_lmk_bary_coords, dtype=self.dtype
-            )
+            dynamic_lmk_bary_coords = torch.tensor(dynamic_lmk_bary_coords, dtype=self.dtype)
             self.register_buffer("dynamic_lmk_bary_coords", dynamic_lmk_bary_coords)
 
             neck_kin_chain = []
