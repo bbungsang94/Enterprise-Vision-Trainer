@@ -7,7 +7,7 @@ from contents.reconstruction.gan.models.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
 
 
-class FLAEP(nn.Module):
+class BasicFLAEP(nn.Module):
     def __init__(self, pin, batch_size):
         super().__init__()
         self.pin_calculator = PinLossCalculator(pin=pin)
@@ -234,5 +234,4 @@ class PinLossCalculator:
         return shape, expression, jaw
 
 
-if __name__ == "__main__":
-    test = FLAEPv1()
+
