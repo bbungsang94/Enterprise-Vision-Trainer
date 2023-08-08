@@ -7,6 +7,26 @@ from contents.reconstruction.gan.models.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
 
 
+class DiffuseFLAEP:
+    def __init__(self, params):
+        pass
+
+    def __call__(self, x):
+        image, graphs, gender = x
+
+    def to_device(self, device: torch.device):
+        pass
+
+    def process_image(self, image):
+        pass
+
+    def process_graphs(self, graph):
+        pass
+
+    def reconstruct_model(self, latent):
+        pass
+
+
 class BasicFLAEP(nn.Module):
     def __init__(self, pin, batch_size):
         super().__init__()
