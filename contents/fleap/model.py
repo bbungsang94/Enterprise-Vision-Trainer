@@ -1,30 +1,113 @@
+import os
+from typing import List, Tuple
+
 import torch
 import timm
 import torch.nn as nn
 from torch import linalg
 from torch_geometric.nn import GCNConv, Sequential
-from contents.reconstruction.gan.models.flame import get_parser, FLAME
+from contents.threeDMM.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
 
 
 class DiffuseFLAEP:
-    def __init__(self, params):
-        pass
+    def __init__(self, **params):
+        self.latent_model = timm.create_model(params['Latent']['name'], pretrained=True, num_classes=0)
+        o = self.latent_model(torch.randn(1, 3, 1024, 1024))
+        params['FLAME']['batch_size'] = params['batch_size']
+        self.generator = FLAMESet(**params['FLAME'])
+        self.FLAEP = FLAEP(o, params)
 
     def __call__(self, x):
         image, graphs, gender = x
+        if len(image) != self.generator.batch_size:
+            return None
+        if next(self.FLAEP.parameters()).is_cuda:
+            image = image.to(torch.device("cuda"))
+            for key, graph in graphs.items():
+                graph = graph.to(torch.device("cuda"))
+                graphs[key] = graph
 
-    def to_device(self, device: torch.device):
+        latent = self.latent_model(image)
+        shape, expression, jaw = self.FLAEP((latent, graphs))
+        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw}
+        _, landmarks = self.generator(genders=gender, **output)
+        return landmarks
+
+    def to(self, device: torch.device):
+        self.latent_model.to(device)
+        self.generator.to(device)
+        self.FLAEP.to(device)
+
+    def forward(self, x) -> [torch.tensor]:
+        # fake function for sanity check
         pass
 
-    def process_image(self, image):
-        pass
+    def train(self):
+        self.FLAEP.train()
 
-    def process_graphs(self, graph):
-        pass
+    def eval(self):
+        self.FLAEP.eval()
 
-    def reconstruct_model(self, latent):
-        pass
+    def parameters(self):
+        return self.FLAEP.parameters()
+
+    def state_dict(self, **kwargs):
+        return self.FLAEP.state_dict(**kwargs)
+
+    def load_state_dict(self, weights):
+        self.FLAEP.load_state_dict(weights)
+
+
+class FLAEP(nn.Module):
+    def __init__(self, o, params):
+        super().__init__()
+        outline_gcn = GCNFlaep(in_channel=3, out_channel=32)
+        eyes_gcn = GCNFlaep(in_channel=6, out_channel=32)
+        lips_gcn = GCNFlaep(in_channel=6, out_channel=32)
+        borrow_gcn = GCNFlaep(in_channel=6, out_channel=32)
+
+        shape_head = FLAEPLinearHead(1024, params['FLAME']['shape_params'])
+        expression_head = FLAEPLinearHead(1024, params['FLAME']['expression_params'])
+        jaw_head = FLAEPLinearHead(1024, params['FLAME']['pose_params'])
+
+        self.Bodies = nn.ModuleDict(
+            {
+                'Outline': outline_gcn,
+                'Eyes': eyes_gcn,
+                'Borrow': borrow_gcn,
+                'Lips': lips_gcn,
+                'ShapeHead': shape_head,
+                'ExpHead': expression_head,
+                'JawHead': jaw_head,
+            }
+        )
+
+    def forward(self, x):
+        latent, graphs = x
+        num_graph = graphs['Outline'].num_graphs
+
+        outline = self.Bodies['Outline'](graphs['Outline'])
+        shape = outline.shape
+        outline = outline.view(num_graph, -1, shape[-1])
+        eyes = self.Bodies['Eyes'](graphs['Eyes'])
+        eyes = eyes.view(num_graph, -1, shape[-1])
+        borrow = self.Bodies['Borrow'](graphs['Borrow'])
+        borrow = borrow.view(num_graph, -1, shape[-1])
+        lips = self.Bodies['Lips'](graphs['Lips'])
+        lips = lips.view(num_graph, -1, shape[-1])
+
+        latent = latent.view(num_graph, -1, shape[-1])
+        shape = torch.cat([latent, lips, eyes, outline], dim=1)
+        expression = torch.cat([latent, lips, borrow], dim=1)
+        jaw = torch.cat([latent, lips, outline], dim=1)
+
+        shape = self.Bodies['ShapeHead'](shape)
+        expression = self.Bodies['ExpHead'](expression)
+        jaw = self.Bodies['JawHead'](jaw)
+        jaw = torch.cat([torch.zeros(num_graph, 3, device=jaw.device), jaw], dim=1)
+
+        return shape, expression, jaw
 
 
 class BasicFLAEP(nn.Module):
@@ -156,12 +239,36 @@ class GCNFlaep(nn.Module):
         return self.model(x.x, x.edge_index)
 
 
+class FLAEPLinearHead(nn.Module):
+    def __init__(self, in_channel, out_channel, dropout=0.3):
+        super().__init__()
+        gap = abs(in_channel - out_channel)
+        head = nn.Sequential(nn.Linear(in_channel, in_channel - gap // 4),
+                             nn.PReLU(),
+                             nn.Dropout(p=dropout),
+                             nn.Linear(in_channel - gap // 4, in_channel - gap // 2),
+                             nn.PReLU(),
+                             nn.Dropout(p=dropout),
+                             nn.Linear(in_channel - gap // 2, out_channel))
+        self.model = head
+
+    def forward(self, x):
+        b, _, _ = x.shape
+        x = nn.functional.adaptive_avg_pool2d(x, output_size=32)
+        x = x.view(b, -1)
+        return self.model(x)
+
+
 class FLAMESet(nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(self, batch_size, **kwargs):
         super().__init__()
         gen_args = get_parser()
-        self.batch_size = kwargs['batch_size']
-        gen_args.batch_size = self.batch_size
+        for key, value in kwargs.items():
+            if "path" in key:
+                kwargs[key] = os.path.join(kwargs['root'], value)
+            setattr(gen_args, key, kwargs[key])
+        gen_args.batch_size = batch_size
+        self.batch_size = batch_size
         gen_args.flame_model_path = gen_args.flame_model_path.replace('generic', 'male')
         male = FLAME(config=gen_args)
         gen_args.flame_model_path = gen_args.flame_model_path.replace('male', 'female')
@@ -252,6 +359,3 @@ class PinLossCalculator:
         expression = torch.cat((expression, b4.unsqueeze(0)))
 
         return shape, expression, jaw
-
-
-

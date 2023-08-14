@@ -1,6 +1,5 @@
 import copy
 import json
-
 import torchvision
 from torch import linalg
 from torch.utils.data import Dataset, DataLoader
@@ -48,6 +47,30 @@ class FLAEPDataLoader(DataLoader):
         batch_expression = torch.stack(batch_expression, dim=0)
         batch_jaw = torch.stack(batch_jaw, dim=0)
         return (torch.stack(batch_images, dim=0), batch_graph, batch_gender), [batch_shape, batch_expression, batch_jaw]
+
+
+class FLAEPNoPinLoader(FLAEPDataLoader):
+    @staticmethod
+    def _collate_fn(batch) -> [torch.tensor, torch.tensor]:
+        g_dict = batch[0][1]
+        batch_graph = dict()
+        batch_images = []
+        batch_gender = []
+        batch_points = []
+
+        for stub in batch:
+            batch_images.append(stub[0])
+            batch_gender.append(stub[2])
+            batch_points.append(stub[-1])
+
+        for key in g_dict.keys():
+            data_list = []
+            for stub in batch:
+                data_list.append(stub[1][key])
+            g_batch = Batch.from_data_list(data_list=copy.deepcopy(data_list))
+            batch_graph[key] = g_batch
+
+        return (torch.stack(batch_images, dim=0), batch_graph, batch_gender), batch_points
 
 
 class FLAEPDataset(Dataset):
@@ -102,7 +125,7 @@ class FLAEPDataset(Dataset):
         shape, expression, jaw = self.calc_distance(torch.FloatTensor(points))
         return image, graphs, gender, shape, expression, jaw
 
-    def calc_distance(self, landmark, mode='landmark'):
+    def calc_distance(self, landmark, mode='68points'):
         for key, box in self.pin_boxes.items():
             box.switch_mode(mode)
             self.pin_boxes[key] = box
@@ -170,3 +193,36 @@ class FLAEPDataset(Dataset):
         expression = torch.cat((expression, b4.unsqueeze(0)))
 
         return shape, expression, jaw
+
+
+class FLAEPNoPinDataset(FLAEPDataset):
+    def __getitem__(self, idx):
+        line = self.x_data[idx]
+        stub = line.split(' ')
+        image = read_image(os.path.join(self.root, stub[0])).type(torch.FloatTensor)
+        mean, std = image.mean(), image.std()
+        gender = stub[1]
+        normalize = torchvision.transforms.Normalize(mean, std)
+        image = normalize(image)
+
+        points = pd.read_csv(os.path.join(self.root, stub[-1]), header=None)
+        points = points.to_numpy()
+        graph_points = pd.read_csv(os.path.join(self.root, stub[-1].replace('landmark', 'landmark-468')), header=None)
+        graph_points = graph_points.to_numpy()
+        graphs = dict()
+        for key, value in self.edges.items():
+            origin = None
+            for i in range(2, value.shape[1] - 1, 2):
+                dump = value[:, i - 2:value.shape[1] - 2]
+                nodes = graph_points[dump[:, 0]]
+                # check non-cyclic
+                if dump[0, 0] != dump[-1, 1]:
+                    nodes = np.concatenate((nodes, np.expand_dims(graph_points[dump[-1, 1]], axis=0)), axis=0)
+                if origin is not None:
+                    origin = np.concatenate((origin, nodes), axis=1)
+                else:
+                    origin = nodes
+            data = Data(x=torch.tensor(origin, dtype=torch.float),
+                        edge_index=torch.tensor(value[:, -2:], dtype=torch.long).t().contiguous())
+            graphs[key] = copy.deepcopy(data)
+        return image, graphs, gender, points

@@ -1,10 +1,10 @@
+from typing import Dict, Any
 import torch
-from torch import nn
+from torch import nn, Tensor
 import torch.nn.functional as F
 from functools import partial
 from einops import rearrange, reduce
 from einops.layers.torch import Rearrange
-
 from modules.utils import default, exists
 
 
@@ -102,3 +102,35 @@ class ResnetBlock(nn.Module):
         h = self.block1(x, scale_shift=scale_shift)
         h = self.block2(h)
         return h + self.res_conv(x)
+
+
+class PixelShuffle(nn.Module):
+    def __init__(self, upscale_factor: int = 2):
+        super().__init__()
+        self.shuffle = nn.PixelShuffle(upscale_factor)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.shuffle(x)
+
+
+class IdentityLayer(nn.Module):
+    def __init__(self, model_config: Dict[str, Any], network_metadata: Dict[str, Any]):
+        super().__init__()
+        self.model_config = model_config
+        self.network_metadata = network_metadata
+
+    def forward(self, decoder_output):
+        x = decoder_output[0]
+        return x
+
+
+class PixelShuffleUpsample(IdentityLayer):
+    def __init__(self, model_config: Dict[str, Any], network_metadata: Dict[str, Any]):
+        super().__init__(model_config=model_config, network_metadata=network_metadata)
+        is_coreml = model_config.get("is_coreml", False)
+        self.shuffle = PixelShuffle(upscale_factor=4)
+
+    def forward(self, decoder_output):
+        x = decoder_output[0]
+        x = self.shuffle(x)
+        return x

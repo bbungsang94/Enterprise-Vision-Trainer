@@ -5,9 +5,9 @@
     },
     "modules": {
         "runner": "SingleGPU",
-        "dataset": "FLAEP",
-        "loader": "FLAEP",
-        "model": "FLAEP",
+        "dataset": "FLAEPv2",
+        "loader": "FLAEPv2",
+        "model": "DiffusionFLAEP",
         "loss": "FLAEP",
         "optimizer": "FLAEP",
         "viewer": "FLAEP"

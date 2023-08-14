@@ -1,10 +1,12 @@
 import os
 from typing import Tuple
-
+from tqdm import tqdm
 import cv2
 import time
 import numpy as np
-from facial_landmarks.cv_mesh.model import FaceLandMarks
+import pandas as pd
+from contents.facial_landmarks.utility import make_3d_points
+from contents.facial_landmarks.cv_mesh.model import FaceLandMarks
 
 
 def inference(model: FaceLandMarks, input_data: np.ndarray) -> Tuple[dict, float]:
@@ -14,21 +16,21 @@ def inference(model: FaceLandMarks, input_data: np.ndarray) -> Tuple[dict, float
     return result, (time.time() - begin)
 
 
-def main(image_files):
+def main():
     detector = FaceLandMarks()
-    for image_file in image_files:
-        image = cv2.imread(image_file)
+    dataset_path = r"D:\Creadto\Heritage\Dataset\GAN dataset\image"
+    debug_output = r"D:\Creadto\Heritage\Dataset\GAN dataset\debug-468"
+    landmark_output = r"D:\Creadto\Heritage\Dataset\GAN dataset\landmark-468"
+    image_files = os.listdir(dataset_path)
+    for image_file in tqdm(image_files):
+        image = cv2.imread(os.path.join(dataset_path, image_file))
         result, inference_time = inference(detector, image)
-        if len(result['faces']) != 0:
-            print(len(result['faces']))
-
-        cv2.putText(result['image'], 'Inference time: %.3f' % inference_time,
-                    (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.imshow("Landmarks", result['image'])
-        cv2.waitKey(1)
+        cv2.imwrite(os.path.join(debug_output, image_file), result['image'])
+        points = make_3d_points(result['landmarks'])
+        landmark = pd.DataFrame(points[0])
+        landmark.to_csv(os.path.join(landmark_output, image_file.replace('.jpg', '.csv')),
+                        index=False, header=False)
 
 
 if __name__ == "__main__":
-    files = os.listdir('../images')
-    files = [os.path.join('../images', x) for x in files]
-    main(files)
+    main()
