@@ -21,7 +21,6 @@
         "optimize_eyeballpose": true,
         "optimize_neckpose": true,
         "num_worker": 4,
-        "batch_size": 8,
         "ring_margin": 0.5,
         "ring_loss_weight": 1.0
     },

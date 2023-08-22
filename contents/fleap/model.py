@@ -20,8 +20,6 @@ class DiffuseFLAEP:
 
     def __call__(self, x):
         image, graphs, gender = x
-        if len(image) != self.generator.batch_size:
-            return None
         if next(self.FLAEP.parameters()).is_cuda:
             image = image.to(torch.device("cuda"))
             for key, graph in graphs.items():
@@ -30,9 +28,7 @@ class DiffuseFLAEP:
 
         latent = self.latent_model(image)
         shape, expression, jaw = self.FLAEP((latent, graphs))
-        output = {'shape_params': shape, 'expression_params': expression, 'pose_params': jaw}
-        _, landmarks = self.generator(genders=gender, **output)
-        return landmarks
+        return shape, expression, jaw
 
     def to(self, device: torch.device):
         self.latent_model.to(device)
@@ -105,7 +101,6 @@ class FLAEP(nn.Module):
         shape = self.Bodies['ShapeHead'](shape)
         expression = self.Bodies['ExpHead'](expression)
         jaw = self.Bodies['JawHead'](jaw)
-        jaw = torch.cat([torch.zeros(num_graph, 3, device=jaw.device), jaw], dim=1)
 
         return shape, expression, jaw
 

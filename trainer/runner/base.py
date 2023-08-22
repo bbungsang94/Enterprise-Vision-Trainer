@@ -1,3 +1,4 @@
+import copy
 import os
 from functools import wraps
 from tqdm import tqdm
@@ -7,7 +8,7 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from trainer.utility.io import CSVWriter, make_dir
+from trainer.utility.io import CSVWriter, make_dir, clean_folder
 from torch.optim.optimizer import Optimizer
 from trainer.utility.monitoring import get_return_variable_count, print_message, get_input_variable_count
 from trainer.viewer.base import Base as Viewer
@@ -32,6 +33,7 @@ class Base(metaclass=ABCMeta):
         # base
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         log_path = os.path.join(self._params['path']['log'], self._params['task']['model_name'], timestamp)
+        clean_folder(os.path.join(self._params['path']['log'], self._params['task']['model_name']))
         self._writer = CSVWriter(log_path)
         self.name = 'base'
         self.model_name = self._params['task']['model_name']
@@ -69,29 +71,28 @@ class Base(metaclass=ABCMeta):
         print(print_message(message='Loader output: ' + str(loader_output), padding=2))
         print(print_message(message='Model Input: ' + str(model_input), padding=2))
         print(print_message(message='Model output: ' + str(get_return_variable_count(self._model.forward)), padding=2))
+        epoch = 0
+        tick = 0
         if self._params['task']['resume']:
             print(print_message(message='Resume Process', padding=3, center=True, line='-'))
             epochs = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name))
             if len(epochs) == 0:
                 print("'\033[91m" + "Not found: can't find checkpoints of this model. Canceled the resuming" + "\033[0m")
-                start = 0
             else:
                 epochs = [int(x) for x in epochs]
                 epoch = max(epochs)
                 ticks = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
                 ticks = [int(x) for x in ticks]
-                # tick = max(ticks) 지금은 방법이 없음..
-                tick = 0
+                tick = max(ticks)
                 full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
                 model_file = os.listdir(full_path)[0]
                 self._load_model(os.path.join(full_path, model_file))
                 print(print_message(message='Epoch: ' + str(epoch), padding=2))
                 print(print_message(message='Tick: ' + str(tick), padding=2))
                 print(print_message(message='Model Name: ' + model_file, padding=2))
-                start = epoch
-        else:
-            start = 0
-        self._params['task']['itr'] = [start, self._params['hyperparameters']['epochs']]
+
+        self._params['task']['itr'] = [epoch, self._params['hyperparameters']['epochs']]
+        self._params['task']['tick'] = tick
         if (loader_output - 1) != model_input:
             print("'\033[91m" + "CONFLICT: Different loader output with model input shapes" + "\033[0m")
 
@@ -117,12 +118,15 @@ class Base(metaclass=ABCMeta):
                 os.mkdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
             # save_option
             if epoch % self._params['task']['save_interval'] == 0:
-                self._save_model(epoch, 0)
+                self._save_model(epoch, self._params['task']['tick'] + 1)
                 self._viewer.save()
 
             # train
             self._model.train()
             train_pbar = tqdm(self._loader, desc='Train', position=0, leave=True)
+            if self._params['task']['tick'] > 0:
+                train_pbar.total -= copy.deepcopy(self._params['task']['tick'])
+                self._params['task']['tick'] = 0
             train_mu = self._run_train_epoch(epoch, train_pbar)
 
             # evaluation

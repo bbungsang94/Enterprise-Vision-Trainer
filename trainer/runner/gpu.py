@@ -55,8 +55,6 @@ class SingleGPURunner(Base):
             inputs, labels = data
 
             outputs = self._model(inputs)
-            if outputs is None:
-                continue
             self._optimizer.zero_grad()
             if not isinstance(labels, torch.Tensor):
                 loss = self._loss(outputs[0], labels[0].to(self.device))

@@ -45,7 +45,7 @@ class FLAME(nn.Module):
         with open(config.flame_model_path, "rb") as f:
             self.flame_model = Struct(**pickle.load(f, encoding="latin1"))
         self.NECK_IDX = 1
-        self.batch_size = config.batch_size
+        self.batch_size = 1
         self.dtype = torch.float32
         self.use_face_contour = config.use_face_contour
         self.faces = self.flame_model.f
@@ -70,6 +70,12 @@ class FLAME(nn.Module):
                                   dtype=self.dtype, requires_grad=False)
         self.register_parameter("expression_betas", nn.Parameter(default_exp, requires_grad=False))
 
+        default_rot = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
+        self.register_parameter("rot", nn.Parameter(default_rot, requires_grad=False))
+
+        default_jaw = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
+        self.register_parameter("jaw", nn.Parameter(default_jaw, requires_grad=False))
+
         # Eyeball and neck rotation
         default_eyball_pose = torch.zeros([self.batch_size, 6], dtype=self.dtype, requires_grad=False)
         self.register_parameter("eye_pose", nn.Parameter(default_eyball_pose, requires_grad=False))
@@ -81,8 +87,8 @@ class FLAME(nn.Module):
 
         self.use_3D_translation = config.use_3D_translation
 
-        default_transl = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
-        self.register_parameter("transl", nn.Parameter(default_transl, requires_grad=False))
+        # default_transl = torch.zeros([self.batch_size, 3], dtype=self.dtype, requires_grad=False)
+        # self.register_parameter("transl", nn.Parameter(default_transl, requires_grad=False))
 
         # The vertices of the template model
         self.register_buffer("v_template", to_tensor(to_np(self.flame_model.v_template), dtype=self.dtype))
@@ -187,12 +193,13 @@ class FLAME(nn.Module):
 
     def forward(
             self,
+            batch_size=1,
             shape_params=None,
             expression_params=None,
-            pose_params=None,
+            jaw_params=None,
+            rotation_params=None,
             neck_pose=None,
             eye_pose=None,
-            transl=None,
     ):
         """
         Input:
@@ -203,15 +210,22 @@ class FLAME(nn.Module):
             vertices: N X V X 3
             landmarks: N X number of landmarks X 3
         """
+
         betas = torch.cat(
-            [shape_params, self.shape_betas, expression_params, self.expression_betas],
+            [
+                shape_params,
+                self.shape_betas[[0]].expand(batch_size, -1),
+                expression_params,
+                self.expression_betas[[0]].expand(batch_size, -1)
+            ],
             dim=1,
         )
         neck_pose = neck_pose if neck_pose is not None else self.neck_pose
         eye_pose = eye_pose if eye_pose is not None else self.eye_pose
-        transl = transl if transl is not None else self.transl
+        rotation_params = rotation_params if rotation_params is not None else self.rot[[0]].expand(batch_size, -1)
+        jaw = jaw_params if jaw_params is not None else self.jaw[[0]].expand(batch_size, -1)
         full_pose = torch.cat(
-            [pose_params[:, :3], neck_pose, pose_params[:, 3:], eye_pose], dim=1
+            [rotation_params, neck_pose, jaw, eye_pose], dim=1
         )
         template_vertices = self.v_template.unsqueeze(0).repeat(self.batch_size, 1, 1)
 
@@ -230,29 +244,10 @@ class FLAME(nn.Module):
         lmk_bary_coords = self.lmk_bary_coords.unsqueeze(dim=0).repeat(
             self.batch_size, 1, 1
         )
-        if self.use_face_contour:
-            (
-                dyn_lmk_faces_idx,
-                dyn_lmk_bary_coords,
-            ) = self._find_dynamic_lmk_idx_and_bcoords(
-                vertices,
-                full_pose,
-                self.dynamic_lmk_faces_idx,
-                self.dynamic_lmk_bary_coords,
-                self.neck_kin_chain,
-                dtype=self.dtype,
-            )
-
-            lmk_faces_idx = torch.cat([dyn_lmk_faces_idx, lmk_faces_idx], 1)
-            lmk_bary_coords = torch.cat([dyn_lmk_bary_coords, lmk_bary_coords], 1)
 
         landmarks = vertices2landmarks(
             vertices, self.faces_tensor, lmk_faces_idx, lmk_bary_coords
         )
-
-        if self.use_3D_translation:
-            landmarks += transl.unsqueeze(dim=1)
-            vertices += transl.unsqueeze(dim=1)
 
         return vertices, landmarks
 
