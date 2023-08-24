@@ -10,8 +10,8 @@ def read_json(full_path=''):
     if '.json' not in full_path:
         full_path += '.json'
     with open(full_path, "r") as f:
-        edge_info = json.load(f)
-    return edge_info
+        file = json.load(f)
+    return file
 
 
 def replace_values(source, target):
