@@ -182,7 +182,7 @@ def generate_new_images(ddpm, n_samples=16, device=None, frames_per_gif=100, gif
                 frame = frame.cpu().numpy().astype(np.uint8)
 
                 # Rendering frame
-                frames.append(frame)
+                frames.append(frame[:, :, 0])
 
     # Storing the gif
     with imageio.get_writer(gif_name, mode="I") as writer:
