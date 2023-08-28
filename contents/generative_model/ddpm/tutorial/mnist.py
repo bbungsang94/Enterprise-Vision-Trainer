@@ -53,7 +53,7 @@ def main():
     generated = generate_new_images(ddpm, gif_name="before_training.gif")
     show_images(generated, "Images generated before training")
     optimizer = optim.Adam(params=ddpm.parameters(), lr=lr)
-    training_loop(ddpm, loader, n_epochs, optimizer, device, display=True)
+    training_loop(ddpm, loader, n_epochs, optimizer, device, display=False)
 
 
 def training_loop(ddpm, loader, n_epochs, opt, device, display=False, store_path="ddpm_model.pt"):
@@ -69,17 +69,17 @@ def training_loop(ddpm, loader, n_epochs, opt, device, display=False, store_path
             n = len(x0)
 
             # Picking some noise for each of the images in the batch, a timestep and the respective alpha_bars
-            eta = torch.randn_like(x0).to(device)
+            epsilon = torch.randn_like(x0).to(device)
             t = torch.randint(0, n_steps, (n,)).to(device)
 
             # Computing the noisy image based on x0 and the time-step (forward process)
-            noisy_imgs = ddpm(x0, t, eta)
+            noisy_imgs = ddpm(x0, t, epsilon)
 
             # Getting model estimation of noise based on the images and the time-step
-            eta_theta = ddpm.backward(noisy_imgs, t.reshape(n, -1))
+            epsilon_theta = ddpm.backward(noisy_imgs, t.reshape(n, -1))
 
             # Optimizing the MSE between the noise plugged and the predicted noise
-            loss = mse(eta_theta, eta)
+            loss = mse(epsilon_theta, epsilon)
             opt.zero_grad()
             loss.backward()
             opt.step()
