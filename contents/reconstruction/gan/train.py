@@ -10,8 +10,8 @@ from tqdm import tqdm
 from datetime import datetime
 from models.flame import FLAME, get_parser
 from utility.monitoring import summary_device
-from contents.fleap.dataset import FLAEPDataset, FLAEPDataLoader
-from contents.fleap.model import FLAEPv1
+from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader
+from contents.reconstruction.fleap.model import FLAEPv1
 from contents import PinLoader
 from facial_landmarks.cv_mesh.align import Aligner
 import matplotlib.pyplot as plt

@@ -1,12 +1,11 @@
 import os
-from typing import List, Tuple
 
 import torch
 import timm
 import torch.nn as nn
 from torch import linalg
 from torch_geometric.nn import GCNConv, Sequential
-from contents.threeDMM.flame import get_parser, FLAME
+from contents.reconstruction.threeDMM.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
 
 

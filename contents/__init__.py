@@ -1,8 +1,8 @@
 from functools import partial
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
-from contents.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
-from contents.fleap.model import BasicFLAEP, DiffuseFLAEP
+from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
+from contents.reconstruction.fleap.model import BasicFLAEP, DiffuseFLAEP
 from contents.generative_model.ddpm.model import Unet
 
 

@@ -35,9 +35,22 @@ class SinusoidalPositionEmbeddings(nn.Module):
         embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
         embeddings = time[:, None] * embeddings[None, :]
         embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
+
         return embeddings
 
 
 class SinusoidalPosEmb(SinusoidalPositionEmbeddings):
     def __init__(self, dim):
         super().__init__(dim=dim)
+
+
+def sinusoidal_embedding(n, d):
+    # Returns the standard positional embedding
+    embedding = torch.zeros(n, d)
+    wk = torch.tensor([1 / 10_000 ** (2 * j / d) for j in range(d)])
+    wk = wk.reshape((1, d))
+    t = torch.arange(n).reshape((n, 1))
+    embedding[:,::2] = torch.sin(t * wk[:,::2])
+    embedding[:,1::2] = torch.cos(t * wk[:,::2])
+
+    return embedding

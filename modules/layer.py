@@ -24,6 +24,14 @@ def downsample(dim, dim_out=None):
     )
 
 
+def simple_mlp(dim_in, dim_out, activation="SiLU"):
+    return nn.Sequential(
+        nn.Linear(dim_in, dim_out),
+        getattr(nn, activation)(),
+        nn.Linear(dim_out, dim_out)
+    )
+
+
 class RMSNorm(nn.Module):
     def __init__(self, dim):
         super().__init__()
@@ -58,7 +66,26 @@ class WeightStandardizedConv2d(nn.Conv2d):
         )
 
 
-class Block(nn.Module):
+class LayerNormBlock(nn.Module):
+    def __init__(self, shape, in_channel, out_channel,
+                 kernel_size=3, stride=1, padding=1, activation="SiLU", normalize=True):
+        super(LayerNormBlock, self).__init__()
+        self.ln = nn.LayerNorm(shape)
+        self.conv1 = nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding)
+        self.conv2 = nn.Conv2d(out_channel, out_channel, kernel_size, stride, padding)
+        self.activation = getattr(nn, activation)()
+        self.normalize = normalize
+
+    def forward(self, x):
+        out = self.ln(x) if self.normalize else x
+        out = self.conv1(out)
+        out = self.activation(out)
+        out = self.conv2(out)
+        out = self.activation(out)
+        return out
+
+
+class GroupNormBlock(nn.Module):
     def __init__(self, dim, dim_out, groups=8):
         super().__init__()
         self.proj = WeightStandardizedConv2d(dim, dim_out, 3, padding=1)
@@ -88,8 +115,8 @@ class ResnetBlock(nn.Module):
             else None
         )
 
-        self.block1 = Block(dim, dim_out, groups=groups)
-        self.block2 = Block(dim_out, dim_out, groups=groups)
+        self.block1 = GroupNormBlock(dim, dim_out, groups=groups)
+        self.block2 = GroupNormBlock(dim_out, dim_out, groups=groups)
         self.res_conv = nn.Conv2d(dim, dim_out, 1) if dim != dim_out else nn.Identity()
 
     def forward(self, x, time_emb=None):
