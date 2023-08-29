@@ -6,6 +6,8 @@ from torch.utils.data import Dataset, DataLoader
 from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
 from contents.reconstruction.fleap.model import BasicFLAEP, DiffuseFLAEP
 from contents.generative_model.ddpm.model import Unet
+from contents.generative_model.skinpatch.dataset import SkinDataset, SkinDataLoader
+from contents.generative_model.skinpatch.model import SkinUNet
 
 
 def get_dataset_fn(dataset, **kwargs) -> Dataset:
@@ -21,20 +23,22 @@ def get_model_fn(model, **kwargs) -> nn.Module:
 
 
 REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
-            'FLAEPloader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
             'FLAEPv2dataset': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
+            'SkinDDPMdataset': partial(get_dataset_fn, dataset=SkinDataset),
+            'FLAEPloader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
             'FLAEPv2loader': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
+            'SkinDDPMloader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
             'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
             'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
             'DiffusionFLAEPmodel': partial(get_model_fn, model=DiffuseFLAEP),
-            'DDPMmodel': partial(get_model_fn, model=Unet)
+            'DDPMmodel': partial(get_model_fn, model=Unet),
+            'SkinDDPMmodel': partial(get_model_fn, model=SkinUNet)
             }
 
 
 class Base(metaclass=ABCMeta):
-    @abstractmethod
     def __init__(self, **kwargs):
-        pass
+        self.device = torch.device("cpu")
 
     @abstractmethod
     def __call__(self, x):

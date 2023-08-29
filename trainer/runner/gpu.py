@@ -12,8 +12,12 @@ class SingleGPURunner(Base):
     def _check_sanity(self):
         super()._check_sanity()
         self.report_state()
-        # GPU로 옮기는 작업이 자동으로 이루어짐 만약 CPU라면 스위치가 따로 있어야함
+
         self._model.to(self.device)
+        for loader in [self._loader, self._evaluator]:
+            checker = dir(loader)
+            if "to" in checker:
+                loader.to(self.device)
 
     def report_state(self):
         self.device = summary_device()

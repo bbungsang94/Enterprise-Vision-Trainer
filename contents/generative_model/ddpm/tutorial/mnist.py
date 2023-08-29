@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, ToTensor, Lambda
 from torchvision.datasets.mnist import MNIST, FashionMNIST
 from contents.utility.vis_utils import show_forward, show_images
-from modules.embedding import SinusoidalPositionEmbeddings, sinusoidal_embedding
+from modules.embedding import sinusoidal_embedding
 from modules.layer import simple_mlp, LayerNormBlock
 
 # Setting reproducibility

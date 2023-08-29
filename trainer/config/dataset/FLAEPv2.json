@@ -1,0 +1,6 @@
+{
+    "dataset_root": "D:\\Creadto\\Heritage\\Dataset\\GAN dataset",
+    "labels": "D:\\Creadto\\Heritage\\Dataset\\GAN dataset\\label.txt",
+    "edge_path": "D:\\Creadto\\Utilities\\Enterprise-Vision-Trainer\\contents\\reconstruction\\gan\\graph_info",
+    "pin_info": "D:\\Creadto\\Utilities\\Enterprise-Vision-Trainer\\contents\\reconstruction\\pinning\\pins"
+}
