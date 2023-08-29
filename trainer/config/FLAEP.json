@@ -16,7 +16,8 @@
         "save_interval": 1,
         "log_interval": 3000,
         "train_ratio": 0.7,
-        "resume": true
+        "resume": true,
+        "visualize": false
     },
     "hyperparameters": {
         "epochs": 300,

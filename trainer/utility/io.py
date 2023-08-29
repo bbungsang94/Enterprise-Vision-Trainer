@@ -37,6 +37,8 @@ def make_dir(path):
 
 
 def clean_folder(path):
+    if not os.path.exists(path):
+        return
     folders = os.listdir(path)
     for folder in folders:
         files = os.listdir(os.path.join(path, folder))

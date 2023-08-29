@@ -19,38 +19,43 @@ class SkinUNet(nn.Module):
 
         self.down1 = nn.Conv2d(10, 10, 4, 2, 1)
         self.down2 = nn.Conv2d(20, 20, 4, 2, 1)
+        self.down3 = nn.Sequential(
+            nn.Conv2d(40, 40, 2, 1),
+            nn.SiLU(),
+            nn.Conv2d(40, 40, 4, 2, 2)
+        )
 
         self.b1 = nn.Sequential(
-            LayerNormBlock((3, 32, 32), 3, 10),
-            LayerNormBlock((10, 32, 32), 10, 10),
-            LayerNormBlock((10, 32, 32), 10, 10)
+            LayerNormBlock((3, 256, 256), 3, 10),
+            LayerNormBlock((10, 256, 256), 10, 10),
+            LayerNormBlock((10, 256, 256), 10, 10)
         )
         self.b2 = nn.Sequential(
-            LayerNormBlock((10, 14, 14), 10, 20),
-            LayerNormBlock((20, 14, 14), 20, 20),
-            LayerNormBlock((20, 14, 14), 20, 20)
+            LayerNormBlock((10, 128, 128), 10, 20),
+            LayerNormBlock((20, 128, 128), 20, 20),
+            LayerNormBlock((20, 128, 128), 20, 20)
         )
         self.b3 = nn.Sequential(
-            LayerNormBlock((20, 7, 7), 20, 40),
-            LayerNormBlock((40, 7, 7), 40, 40),
-            LayerNormBlock((40, 7, 7), 40, 40)
+            LayerNormBlock((20, 64, 64), 20, 40),
+            LayerNormBlock((40, 64, 64), 40, 40),
+            LayerNormBlock((40, 64, 64), 40, 40)
         )
         # endregion
 
         # region Bottleneck
         self.te_mid = simple_mlp(time_emb_dim, 40)
         self.b_mid = nn.Sequential(
-            LayerNormBlock((40, 3, 3), 40, 20),
-            LayerNormBlock((20, 3, 3), 20, 20),
-            LayerNormBlock((20, 3, 3), 20, 40)
+            LayerNormBlock((40, 32, 32), 40, 20),
+            LayerNormBlock((20, 32, 32), 20, 20),
+            LayerNormBlock((20, 32, 32), 20, 40)
         )
         # endregion
 
         # region Up-Sampling
         self.up1 = nn.Sequential(
-            nn.ConvTranspose2d(40, 40, 4, 2, 1),
+            nn.ConvTranspose2d(40, 40, 2, 1),
             nn.SiLU(),
-            nn.ConvTranspose2d(40, 40, 2, 1)
+            nn.ConvTranspose2d(40, 40, 4, 2, 2)
         )
         self.up2 = nn.ConvTranspose2d(20, 20, 4, 2, 1)
         self.up3 = nn.ConvTranspose2d(10, 10, 4, 2, 1)
@@ -60,22 +65,24 @@ class SkinUNet(nn.Module):
         self.te_out = simple_mlp(time_emb_dim, 20)
 
         self.b4 = nn.Sequential(
-            LayerNormBlock((80, 7, 7), 80, 40),
-            LayerNormBlock((40, 7, 7), 40, 20),
-            LayerNormBlock((20, 7, 7), 20, 20)
+            LayerNormBlock((80, 64, 64), 80, 40),
+            LayerNormBlock((40, 64, 64), 40, 20),
+            LayerNormBlock((20, 64, 64), 20, 20)
         )
         self.b5 = nn.Sequential(
-            LayerNormBlock((40, 14, 14), 40, 20),
-            LayerNormBlock((20, 14, 14), 20, 10),
-            LayerNormBlock((10, 14, 14), 10, 10)
+            LayerNormBlock((40, 128, 128), 40, 20),
+            LayerNormBlock((20, 128, 128), 20, 10),
+            LayerNormBlock((10, 128, 128), 10, 10)
         )
         self.b_out = nn.Sequential(
-            LayerNormBlock((20, 28, 28), 20, 10),
-            LayerNormBlock((10, 28, 28), 10, 10),
-            LayerNormBlock((10, 28, 28), 10, 10, normalize=False)
+            LayerNormBlock((20, 256, 256), 20, 10),
+            LayerNormBlock((10, 256, 256), 10, 10),
+            LayerNormBlock((10, 256, 256), 10, 10, normalize=False)
         )
+        self.conv_out = nn.Conv2d(10, 3, 3, 1, 1)
 
-    def forward(self, x, t):
+    def forward(self, sample) -> [torch.Tensor]:
+        x, t = sample
         # x_T is (N, 6, 256, 256) (image with positional embedding stacked on channel dimension)
         t = self.time_embed(t)
         n = len(x)
@@ -97,3 +104,9 @@ class SkinUNet(nn.Module):
         out = self.conv_out(out)
 
         return out
+
+    # def summary(self):
+    #     model, images,
+    #     betas, alphas, alpha_bars,
+    #     frames_per_gif, gif_name,
+    #     save_path

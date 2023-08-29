@@ -101,17 +101,24 @@ class Base(metaclass=ABCMeta):
         if not os.path.exists(full_path):
             os.mkdir(full_path)
         timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
-        torch.save(self._model.state_dict(), os.path.join(full_path, timeline))
+        weights = {'model': self._model.state_dict()}
+        if "state_dict" in dir(self._loader):
+            weights.update(self._loader.state_dict())
+        torch.save(weights, os.path.join(full_path, timeline))
 
     def _load_model(self, full_path):
         weights = torch.load(full_path)
-        self._model.load_state_dict(weights)
+        if "load_state_dict" in dir(self._loader):
+            self._loader.load_state_dict(weights)
+        self._model.load_state_dict(weights['model'])
 
     def loop(self) -> None:
         self._check_sanity()
-        self._viewer.show()
         outer_pbar = tqdm(range(*self._params['task']['itr']),
                           desc='Outer progress is created', position=0, leave=True)
+
+        if "sample" in dir(self._loader) and self._params['task']['visualize']:
+            self._viewer.show(**self._loader.sample())
 
         for epoch in range(*self._params['task']['itr']):
             if not os.path.exists(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch)):
@@ -119,7 +126,8 @@ class Base(metaclass=ABCMeta):
             # save_option
             if epoch % self._params['task']['save_interval'] == 0:
                 self._save_model(epoch, self._params['task']['tick'] + 1)
-                self._viewer.save()
+                if "summary" in dir(self._model):
+                    self._viewer.summary(**self._model.summary())
 
             # train
             self._model.train()
@@ -142,4 +150,3 @@ class Base(metaclass=ABCMeta):
             line = "avg_loss(train): %.4f, avg_loss(eval): %.4f, epoch: %06d" % (train_mu, eval_mu, epoch)
             # outer_pbar.set_description(line)
             print(line)
-        self._viewer.summary()
