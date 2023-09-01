@@ -1,11 +1,12 @@
 from typing import Dict, Any
+
 import torch
 from torch import nn, Tensor
 import torch.nn.functional as F
-from functools import partial
-from einops import rearrange, reduce
 from einops.layers.torch import Rearrange
-from modules.utils import default, exists
+
+from modules.blocks import DoubleConv
+from modules.utils import default
 
 
 # small helper modules
@@ -32,103 +33,45 @@ def simple_mlp(dim_in, dim_out, activation="SiLU"):
     )
 
 
-class RMSNorm(nn.Module):
-    def __init__(self, dim):
+class DoubleConvUp(nn.Module):
+    def __init__(self, in_channels, out_channels, bilinear=True):
         super().__init__()
-        self.g = nn.Parameter(torch.ones(1, dim, 1, 1))
 
-    def forward(self, x):
-        return F.normalize(x, dim=1) * self.g * (x.shape[1] ** 0.5)
+        # if bilinear, use the normal convolutions to reduce the number of channels
+        if bilinear:
+            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.conv = DoubleConv(in_channels, in_channels, residual=True)
+            self.conv2 = DoubleConv(in_channels, out_channels, in_channels // 2)
+        else:
+            self.up = nn.ConvTranspose2d(
+                in_channels, in_channels // 2, kernel_size=2, stride=2
+            )
+            self.conv = DoubleConv(in_channels, out_channels)
 
+    def forward(self, x1, x2):
+        x1 = self.up(x1)
+        # input is CHW
+        diffY = x2.size()[2] - x1.size()[2]
+        diffX = x2.size()[3] - x1.size()[3]
 
-class WeightStandardizedConv2d(nn.Conv2d):
-    """
-    https://arxiv.org/abs/1903.10520
-    weight standardization purportedly works synergistically with group normalization
-    """
-
-    def forward(self, x):
-        eps = 1e-5 if x.dtype == torch.float32 else 1e-3
-
-        weight = self.weight
-        mean = reduce(weight, "o ... -> o 1 1 1", "mean")
-        var = reduce(weight, "o ... -> o 1 1 1", partial(torch.var, unbiased=False))
-        normalized_weight = (weight - mean) * (var + eps).rsqrt()
-
-        return F.conv2d(
-            x,
-            normalized_weight,
-            self.bias,
-            self.stride,
-            self.padding,
-            self.dilation,
-            self.groups,
-        )
-
-
-class LayerNormBlock(nn.Module):
-    def __init__(self, shape, in_channel, out_channel,
-                 kernel_size=3, stride=1, padding=1, activation="SiLU", normalize=True):
-        super(LayerNormBlock, self).__init__()
-        self.ln = nn.LayerNorm(shape)
-        self.conv1 = nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding)
-        self.conv2 = nn.Conv2d(out_channel, out_channel, kernel_size, stride, padding)
-        self.activation = getattr(nn, activation)()
-        self.normalize = normalize
-
-    def forward(self, x):
-        out = self.ln(x) if self.normalize else x
-        out = self.conv1(out)
-        out = self.activation(out)
-        out = self.conv2(out)
-        out = self.activation(out)
-        return out
-
-
-class GroupNormBlock(nn.Module):
-    def __init__(self, dim, dim_out, groups=8):
-        super().__init__()
-        self.proj = WeightStandardizedConv2d(dim, dim_out, 3, padding=1)
-        self.norm = nn.GroupNorm(groups, dim_out)
-        self.act = nn.SiLU()
-
-    def forward(self, x, scale_shift=None):
-        x = self.proj(x)
-        x = self.norm(x)
-
-        if exists(scale_shift):
-            scale, shift = scale_shift
-            x = x * (scale + 1) + shift
-
-        x = self.act(x)
+        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2])
+        x = torch.cat([x2, x1], dim=1)
+        x = self.conv(x)
+        x = self.conv2(x)
         return x
 
 
-class ResnetBlock(nn.Module):
-    """https://arxiv.org/abs/1512.03385"""
-
-    def __init__(self, dim, dim_out, *, time_emb_dim=None, groups=8):
+class DoubleConvDown(nn.Module):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.mlp = (
-            nn.Sequential(nn.SiLU(), nn.Linear(time_emb_dim, dim_out * 2))
-            if exists(time_emb_dim)
-            else None
+        self.maxpool_conv = nn.Sequential(
+            nn.MaxPool2d(2),
+            DoubleConv(in_channels, in_channels, residual=True),
+            DoubleConv(in_channels, out_channels),
         )
 
-        self.block1 = GroupNormBlock(dim, dim_out, groups=groups)
-        self.block2 = GroupNormBlock(dim_out, dim_out, groups=groups)
-        self.res_conv = nn.Conv2d(dim, dim_out, 1) if dim != dim_out else nn.Identity()
-
-    def forward(self, x, time_emb=None):
-        scale_shift = None
-        if exists(self.mlp) and exists(time_emb):
-            time_emb = self.mlp(time_emb)
-            time_emb = rearrange(time_emb, "b c -> b c 1 1")
-            scale_shift = time_emb.chunk(2, dim=1)
-
-        h = self.block1(x, scale_shift=scale_shift)
-        h = self.block2(h)
-        return h + self.res_conv(x)
+    def forward(self, x):
+        return self.maxpool_conv(x)
 
 
 class PixelShuffle(nn.Module):

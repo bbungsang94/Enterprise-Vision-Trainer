@@ -1,4 +1,5 @@
 import copy
+import math
 import os
 from functools import wraps
 from tqdm import tqdm
@@ -43,6 +44,7 @@ class Base(metaclass=ABCMeta):
 
         # inner
         self.__loop = self.loop
+        self.best_loss = math.inf
 
     @abstractmethod
     def _run_train_epoch(self, index, progress):
@@ -77,14 +79,22 @@ class Base(metaclass=ABCMeta):
             print(print_message(message='Resume Process', padding=3, center=True, line='-'))
             epochs = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name))
             if len(epochs) == 0:
-                print("'\033[91m" + "Not found: can't find checkpoints of this model. Canceled the resuming" + "\033[0m")
+                print(
+                    "'\033[91m" + "Not found: can't find checkpoints of this model. Canceled the resuming" + "\033[0m")
             else:
-                epochs = [int(x) for x in epochs]
+                if "Best" in epochs:
+                    # Update loss from the best model
+                    weights = torch.load(os.path.join(self._params['path']['checkpoint'],
+                                                      self.model_name, "Best", "BestModel.pth"))
+                    self.best_loss = weights['loss']
+
+                epochs = [int(x) for x in epochs if x != "Best"]
                 epoch = max(epochs)
                 ticks = os.listdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
                 ticks = [int(x) for x in ticks]
                 tick = max(ticks)
-                full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
+                full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch,
+                                         "%08d" % tick)
                 model_file = os.listdir(full_path)[0]
                 self._load_model(os.path.join(full_path, model_file))
                 print(print_message(message='Epoch: ' + str(epoch), padding=2))
@@ -96,12 +106,20 @@ class Base(metaclass=ABCMeta):
         if (loader_output - 1) != model_input:
             print("'\033[91m" + "CONFLICT: Different loader output with model input shapes" + "\033[0m")
 
-    def _save_model(self, epoch: int, tick: int, prefix=''):
-        full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
+    def _save_model(self, epoch: int, tick: int, prefix='', loss=None):
+        timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
+        if tick < 0:
+            full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
+            timeline = "BestModel.pth"
+        else:
+            full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
         if not os.path.exists(full_path):
             os.mkdir(full_path)
-        timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
-        weights = {'model': self._model.state_dict()}
+
+        loss = loss if loss is not None else 999.9
+        weights = {'model': self._model.state_dict(),
+                   'epochs': epoch,
+                   'loss': loss}
         if "state_dict" in dir(self._loader):
             weights.update(self._loader.state_dict())
         torch.save(weights, os.path.join(full_path, timeline))
@@ -126,12 +144,10 @@ class Base(metaclass=ABCMeta):
             # save_option
             if epoch % self._params['task']['save_interval'] == 0:
                 self._save_model(epoch, self._params['task']['tick'] + 1)
-                if "summary" in dir(self._model):
-                    self._viewer.summary(**self._model.summary())
 
             # train
             self._model.train()
-            train_pbar = tqdm(self._loader, desc='Train', position=0, leave=True)
+            train_pbar = tqdm(self._loader, desc='Train', position=0, leave=True, ncols=80)
             if self._params['task']['tick'] > 0:
                 train_pbar.total -= copy.deepcopy(self._params['task']['tick'])
                 self._params['task']['tick'] = 0
@@ -139,7 +155,7 @@ class Base(metaclass=ABCMeta):
 
             # evaluation
             self._model.eval()
-            eval_pbar = tqdm(self._evaluator, desc='Eval', position=0, leave=True)
+            eval_pbar = tqdm(self._evaluator, desc='Eval', position=0, leave=True, ncols=80)
             eval_mu = self._run_eval_epoch(epoch, eval_pbar)
 
             # recording
@@ -150,3 +166,13 @@ class Base(metaclass=ABCMeta):
             line = "avg_loss(train): %.4f, avg_loss(eval): %.4f, epoch: %06d" % (train_mu, eval_mu, epoch)
             # outer_pbar.set_description(line)
             print(line)
+
+            if self.best_loss > eval_mu:
+                self.best_loss = eval_mu
+                print("Updated best model.")
+                self._save_model(epoch, -1, loss=self.best_loss)
+                if "summary" in dir(self._model) and "sample" in dir(self._loader):
+                    result = self._model.summary(**self._loader.sample())
+                    result['save_path'] = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
+                    result['model'] = self._model
+                    self._viewer.summary(**result)

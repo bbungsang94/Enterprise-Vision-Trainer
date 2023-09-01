@@ -1,4 +1,7 @@
 {
     "n_steps": null,
-    "time_emb_dim": null
+    "time_emb_dim": null,
+    "min_beta": null,
+    "max_beta": null,
+    "colour": null
 }

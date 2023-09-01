@@ -7,7 +7,8 @@ from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader,
 from contents.reconstruction.fleap.model import BasicFLAEP, DiffuseFLAEP
 from contents.generative_model.ddpm.model import Unet
 from contents.generative_model.skinpatch.dataset import SkinDataset, SkinDataLoader
-from contents.generative_model.skinpatch.model import SkinUNet
+from contents.generative_model.skinpatch.model import SkinDiffusion
+from contents.generative_model.skinpatch.loss import FakeLoss
 
 
 def get_dataset_fn(dataset, **kwargs) -> Dataset:
@@ -32,7 +33,8 @@ REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
             'DiffusionFLAEPmodel': partial(get_model_fn, model=DiffuseFLAEP),
             'DDPMmodel': partial(get_model_fn, model=Unet),
-            'SkinDDPMmodel': partial(get_model_fn, model=SkinUNet)
+            'SkinDDPMmodel': partial(get_model_fn, model=SkinDiffusion),
+            'Diffusionloss': FakeLoss
             }
 
 

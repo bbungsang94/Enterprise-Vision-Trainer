@@ -2,8 +2,9 @@ from functools import partial
 import torch
 from torch import nn
 from modules.attention import LinearAttention, Attention
+from modules.blocks import ResnetBlock
 from modules.embedding import RandomOrLearnedSinusoidalPosEmb, SinusoidalPosEmb
-from modules.layer import ResnetBlock, downsample, upsample
+from modules.layer import downsample, upsample
 from modules.utils import default, cast_tuple, divisible_by
 
 

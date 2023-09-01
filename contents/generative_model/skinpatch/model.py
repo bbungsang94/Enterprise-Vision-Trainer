@@ -1,7 +1,121 @@
+import math
+from typing import T, Optional, Union
+
 import torch
 from torch import nn
+
+from modules.attention import SAWrapper
+from modules.blocks import DoubleConv
 from modules.embedding import sinusoidal_embedding
-from modules.layer import LayerNormBlock, simple_mlp
+from modules.layer import simple_mlp, DoubleConvUp, DoubleConvDown
+from modules.normalization import LayerNorm
+
+
+class SkinDiffusion(nn.Module):
+    def __init__(self, n_steps=1000, time_emb_dim=100, min_beta=10 ** -4, max_beta=0.02, colour=True):
+        super(SkinDiffusion, self).__init__()
+        self.device = torch.device("cpu")
+
+        self.colour = 3 if colour is True else 1
+        self.n_steps = n_steps
+        self.betas = torch.linspace(min_beta, max_beta, n_steps)
+        self.alphas = 1 - self.betas
+        self.alpha_bars = torch.tensor([torch.prod(self.alphas[:i + 1]) for i in range(len(self.alphas))])
+
+        # networks
+        bi_linear = True
+        self.inc = DoubleConv(self.colour, 64)
+        self.down1 = DoubleConvDown(64, 128)
+        self.down2 = DoubleConvDown(128, 256)
+        factor = 2 if bi_linear else 1
+        self.down3 = DoubleConvDown(256, 512 // factor)
+        self.up1 = DoubleConvUp(512, 256 // factor, bi_linear)
+        self.up2 = DoubleConvUp(256, 128 // factor, bi_linear)
+        self.up3 = DoubleConvUp(128, 64, bi_linear)
+        self.out = nn.Conv2d(64, self.colour, kernel_size=1)
+        #32 256
+        #16 128
+        #8 64
+        #4 32
+        self.sa1 = SAWrapper(256, 64)
+        self.sa2 = SAWrapper(256, 32)
+        self.sa3 = SAWrapper(128, 64)
+
+    def to(self, *args, **kwargs) -> T:
+        super(SkinDiffusion, self).to(*args, **kwargs)
+        self.device = args[0]
+        self.betas = self.betas.to(self.device)
+        self.alphas = self.alphas.to(self.device)
+        self.alpha_bars = self.alpha_bars.to(self.device)
+
+    def pos_encoding(self, t, channels, embed_size):
+        inv_freq = 1.0 / (
+                10000
+                ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
+        )
+        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
+        ret = pos_enc.view(-1, channels, 1, 1).repeat(1, 1, embed_size, embed_size)
+        return ret
+
+    def forward(self, x0) -> [torch.Tensor]:
+        sample, epsilon = self.make_noise(x0)
+        x, t = sample
+        """
+        3x32x32로 설계되어 있음!!!
+        Model is U-Net with added positional encodings and self-attention layers.
+        """
+        x1 = self.inc(x)
+        x2 = self.down1(x1) + self.pos_encoding(t, 128, 128)
+        x3 = self.down2(x2) + self.pos_encoding(t, 256, 64)
+        x3 = self.sa1(x3)
+        x4 = self.down3(x3) + self.pos_encoding(t, 256, 32)
+        x4 = self.sa2(x4)
+        x = self.up1(x4, x3) + self.pos_encoding(t, 128, 64)
+        x = self.sa3(x)
+        x = self.up2(x, x2) + self.pos_encoding(t, 64, 128)
+        x = self.up3(x, x1) + self.pos_encoding(t, 64, 256)
+        e_hat = self.out(x)
+        loss = nn.functional.mse_loss(e_hat, epsilon)
+        return loss
+
+    def backward(self, x, t):
+        """
+        Corresponds to the inner loop of Algorithm 2 from (Ho et al., 2020).
+        """
+        with torch.no_grad():
+            if t > 1:
+                z = torch.randn(x.shape)
+            else:
+                z = 0
+            e_hat = self.forward((x, t.view(1, 1).repeat(x.shape[0], 1)))
+            pre_scale = 1 / math.sqrt(self.alpha(t))
+            e_scale = (1 - self.alpha(t)) / math.sqrt(1 - self.alpha_bar(t))
+            post_sigma = math.sqrt(self.beta(t)) * z
+            x = pre_scale * (x - e_scale * e_hat) + post_sigma
+            return x
+
+    def make_noise(self, x0):
+        n = x0.shape[0]
+        t = torch.randint(0, self.n_steps, (n,)).to(self.device)
+
+        # make noise(diffusion forward)
+        epsilon = torch.randn(x0.shape).to(self.device)
+        a_bar = self.alpha_bars[t]
+        noisy = a_bar.sqrt().reshape(n, 1, 1, 1) * x0 + (1 - a_bar).sqrt().reshape(n, 1, 1, 1) * epsilon
+
+        return (noisy, t.unsqueeze(-1).type(torch.float)), epsilon
+
+    def summary(self, skins, images, **kwargs):
+        result = {'model': None,
+                  'x0': skins,
+                  'inputs': images,
+                  'frames_per_gif': 100,
+                  'gif_name': "generation.gif",
+                  'save_path': None,
+                  'device': self.device}
+        return result
 
 
 class SkinUNet(nn.Module):
@@ -26,28 +140,28 @@ class SkinUNet(nn.Module):
         )
 
         self.b1 = nn.Sequential(
-            LayerNormBlock((3, 256, 256), 3, 10),
-            LayerNormBlock((10, 256, 256), 10, 10),
-            LayerNormBlock((10, 256, 256), 10, 10)
+            LayerNorm((3, 256, 256), 3, 10),
+            LayerNorm((10, 256, 256), 10, 10),
+            LayerNorm((10, 256, 256), 10, 10)
         )
         self.b2 = nn.Sequential(
-            LayerNormBlock((10, 128, 128), 10, 20),
-            LayerNormBlock((20, 128, 128), 20, 20),
-            LayerNormBlock((20, 128, 128), 20, 20)
+            LayerNorm((10, 128, 128), 10, 20),
+            LayerNorm((20, 128, 128), 20, 20),
+            LayerNorm((20, 128, 128), 20, 20)
         )
         self.b3 = nn.Sequential(
-            LayerNormBlock((20, 64, 64), 20, 40),
-            LayerNormBlock((40, 64, 64), 40, 40),
-            LayerNormBlock((40, 64, 64), 40, 40)
+            LayerNorm((20, 64, 64), 20, 40),
+            LayerNorm((40, 64, 64), 40, 40),
+            LayerNorm((40, 64, 64), 40, 40)
         )
         # endregion
 
         # region Bottleneck
         self.te_mid = simple_mlp(time_emb_dim, 40)
         self.b_mid = nn.Sequential(
-            LayerNormBlock((40, 32, 32), 40, 20),
-            LayerNormBlock((20, 32, 32), 20, 20),
-            LayerNormBlock((20, 32, 32), 20, 40)
+            LayerNorm((40, 32, 32), 40, 20),
+            LayerNorm((20, 32, 32), 20, 20),
+            LayerNorm((20, 32, 32), 20, 40)
         )
         # endregion
 
@@ -65,19 +179,19 @@ class SkinUNet(nn.Module):
         self.te_out = simple_mlp(time_emb_dim, 20)
 
         self.b4 = nn.Sequential(
-            LayerNormBlock((80, 64, 64), 80, 40),
-            LayerNormBlock((40, 64, 64), 40, 20),
-            LayerNormBlock((20, 64, 64), 20, 20)
+            LayerNorm((80, 64, 64), 80, 40),
+            LayerNorm((40, 64, 64), 40, 20),
+            LayerNorm((20, 64, 64), 20, 20)
         )
         self.b5 = nn.Sequential(
-            LayerNormBlock((40, 128, 128), 40, 20),
-            LayerNormBlock((20, 128, 128), 20, 10),
-            LayerNormBlock((10, 128, 128), 10, 10)
+            LayerNorm((40, 128, 128), 40, 20),
+            LayerNorm((20, 128, 128), 20, 10),
+            LayerNorm((10, 128, 128), 10, 10)
         )
         self.b_out = nn.Sequential(
-            LayerNormBlock((20, 256, 256), 20, 10),
-            LayerNormBlock((10, 256, 256), 10, 10),
-            LayerNormBlock((10, 256, 256), 10, 10, normalize=False)
+            LayerNorm((20, 256, 256), 20, 10),
+            LayerNorm((10, 256, 256), 10, 10),
+            LayerNorm((10, 256, 256), 10, 10, normalize=False)
         )
         self.conv_out = nn.Conv2d(10, 3, 3, 1, 1)
 
@@ -105,8 +219,18 @@ class SkinUNet(nn.Module):
 
         return out
 
-    # def summary(self):
-    #     model, images,
-    #     betas, alphas, alpha_bars,
-    #     frames_per_gif, gif_name,
-    #     save_path
+    @staticmethod
+    def summary(images, skins, **kwargs):
+        result = {'inputs': images,
+                  'x0': skins,
+                  'xT': kwargs['xT'],
+                  'betas': kwargs['betas'],
+                  'alphas': kwargs['alphas'],
+                  'alpha_bars': kwargs['alpha_bars'],
+                  'n_steps': kwargs['n_steps'],
+                  'frames_per_gif': 100,
+                  'gif_name': "generation.gif",
+                  'device': kwargs['device'],
+                  'model': None,
+                  'save_path': None}
+        return result

@@ -55,9 +55,12 @@ class SingleGPURunner(Base):
         line = "Calculating loss..."
         progress.set_description(line)
         for i, data in enumerate(progress):
-            inputs, labels = data
+            if progress.total < progress.n:
+                return 1.0
 
+            inputs, labels = data
             outputs = self._model(inputs)
+
             self._optimizer.zero_grad()
             if not isinstance(labels, torch.Tensor):
                 loss = self._loss(outputs[0], labels[0].to(self.device))
@@ -65,11 +68,13 @@ class SingleGPURunner(Base):
                     loss += self._loss(outputs[itr], labels[itr].to(self.device))
             else:
                 loss = self._loss(outputs, labels.to(self.device))
-
             loss.backward()
             self._optimizer.step()
 
             running_loss += loss.item()
+            line = "avg_loss: %.4f, ticks: %06d" % (loss.item(), i)
+            progress.set_description(line)
+
             if i % self._params['task']['log_interval'] == self._params['task']['log_interval'] - 1:
                 save_path = os.path.join(self._params['path']['checkpoint'],
                                          self.model_name, "%08d" % index, "%08d" % i)
@@ -81,10 +86,8 @@ class SingleGPURunner(Base):
                 #                   faces=self._model.generator.faces, text=loss.item(), save_path=save_path)
                 avg_loss = running_loss / self._params['task']['log_interval']  # loss per batch
                 self._write_log(epoch=index, tick=i, loss=avg_loss, mode=mode)
-                self._save_model(index, i)
+                self._save_model(index, i, loss=avg_loss)
 
                 # Gather data and report
-                line = "avg_loss: %.4f, ticks: %06d" % (avg_loss, i)
-                progress.set_description(line)
                 running_loss = 0
         return avg_loss
