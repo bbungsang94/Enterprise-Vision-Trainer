@@ -22,7 +22,7 @@ class SkinDiffusion(nn.Module):
         self.alphas = 1 - self.betas
         self.alpha_bars = torch.tensor([torch.prod(self.alphas[:i + 1]) for i in range(len(self.alphas))])
 
-        # networks
+        # networks 3 32 32 -> 64 32 32 3 256 256
         bi_linear = True
         self.inc = DoubleConv(self.colour, 64)
         self.down1 = DoubleConvDown(64, 128)
@@ -33,10 +33,6 @@ class SkinDiffusion(nn.Module):
         self.up2 = DoubleConvUp(256, 128 // factor, bi_linear)
         self.up3 = DoubleConvUp(128, 64, bi_linear)
         self.out = nn.Conv2d(64, self.colour, kernel_size=1)
-        #32 256
-        #16 128
-        #8 64
-        #4 32
         self.sa1 = SAWrapper(256, 64)
         self.sa2 = SAWrapper(256, 32)
         self.sa3 = SAWrapper(128, 64)
@@ -61,11 +57,14 @@ class SkinDiffusion(nn.Module):
 
     def forward(self, x0) -> [torch.Tensor]:
         sample, epsilon = self.make_noise(x0)
-        x, t = sample
         """
-        3x32x32로 설계되어 있음!!!
         Model is U-Net with added positional encodings and self-attention layers.
         """
+        e_hat = self.backward(*sample)
+        loss = nn.functional.mse_loss(e_hat, epsilon)
+        return loss
+
+    def backward(self, x, t):
         x1 = self.inc(x)
         x2 = self.down1(x1) + self.pos_encoding(t, 128, 128)
         x3 = self.down2(x2) + self.pos_encoding(t, 256, 64)
@@ -77,23 +76,24 @@ class SkinDiffusion(nn.Module):
         x = self.up2(x, x2) + self.pos_encoding(t, 64, 128)
         x = self.up3(x, x1) + self.pos_encoding(t, 64, 256)
         e_hat = self.out(x)
-        loss = nn.functional.mse_loss(e_hat, epsilon)
-        return loss
+        return e_hat
 
-    def backward(self, x, t):
+    def regenerate(self, x, t):
         """
         Corresponds to the inner loop of Algorithm 2 from (Ho et al., 2020).
         """
         with torch.no_grad():
             if t > 1:
                 z = torch.randn(x.shape)
+                post_sigma = math.sqrt(self.betas[t]) * z
             else:
-                z = 0
-            e_hat = self.forward((x, t.view(1, 1).repeat(x.shape[0], 1)))
-            pre_scale = 1 / math.sqrt(self.alpha(t))
-            e_scale = (1 - self.alpha(t)) / math.sqrt(1 - self.alpha_bar(t))
-            post_sigma = math.sqrt(self.beta(t)) * z
-            x = pre_scale * (x - e_scale * e_hat) + post_sigma
+                post_sigma = torch.tensor(0.0, dtype=torch.float32)
+            time_tensor = (torch.ones(x.shape[0], 1) * t).to(self.device).long()
+
+            e_hat = self.backward(x, time_tensor)
+            pre_scale = 1 / math.sqrt(self.alphas[t])
+            e_scale = (1 - self.alphas[t]) / math.sqrt(1 - self.alpha_bars[t])
+            x = pre_scale * (x - e_scale * e_hat) + post_sigma.to(self.device)
             return x
 
     def make_noise(self, x0):

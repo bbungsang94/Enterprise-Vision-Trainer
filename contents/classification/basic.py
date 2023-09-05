@@ -111,7 +111,7 @@ def train_one_epoch(epoch_index, tb_writer):
 
         # Compute the loss and its gradients
         loss = loss_fn(outputs, labels)
-        loss.backward()
+        loss.regenerate()
 
         # Adjust learning weights
         optimizer.step()

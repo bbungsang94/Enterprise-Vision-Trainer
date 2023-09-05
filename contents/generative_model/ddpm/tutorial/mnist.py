@@ -78,12 +78,12 @@ def training_loop(ddpm, loader, n_epochs, opt, device, display=False, store_path
             noisy_imgs = ddpm(x0, t, epsilon)
 
             # Getting model estimation of noise based on the images and the time-step
-            epsilon_theta = ddpm.backward(noisy_imgs, t.reshape(n, -1))
+            epsilon_theta = ddpm.regenerate(noisy_imgs, t.reshape(n, -1))
 
             # Optimizing the MSE between the noise plugged and the predicted noise
             loss = mse(epsilon_theta, epsilon)
             opt.zero_grad()
-            loss.backward()
+            loss.regenerate()
             opt.step()
 
             epoch_loss += loss.item() * len(x0) / len(loader.dataset)
@@ -148,7 +148,7 @@ def generate_new_images(ddpm, n_samples=16, device=None, frames_per_gif=100, gif
         for idx, t in enumerate(list(range(ddpm.n_steps))[::-1]):
             # Estimating noise to be removed
             time_tensor = (torch.ones(n_samples, 1) * t).to(device).long()
-            eta_theta = ddpm.backward(x, time_tensor)
+            eta_theta = ddpm.regenerate(x, time_tensor)
 
             alpha_t = ddpm.alphas[t]
             alpha_t_bar = ddpm.alpha_bars[t]

@@ -55,7 +55,6 @@ class DiffusionViewer(Base):
              frames_per_gif, gif_name,
              save_path, **kwargs):
 
-        device = torch.device("cpu") if "device" not in kwargs else kwargs['device']
         n_samples, c, w, h = x0.shape
 
         """Given a DDPM model, a number of samples to be generated and a device, returns some newly generated samples"""
@@ -68,7 +67,7 @@ class DiffusionViewer(Base):
 
             for idx, t in enumerate(list(range(model.n_steps))[::-1]):
                 # Estimating noise to be removed
-                recon = model.backward(epsilon, t)
+                recon = model.regenerate(epsilon, t)
 
                 # Adding frames to the GIF
                 if idx in frame_idxs or t == 0:

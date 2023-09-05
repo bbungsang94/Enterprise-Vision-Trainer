@@ -277,7 +277,7 @@ def loop(batch_size=4, epochs=300, learning_rate=1e-3):
             expression_loss = loss(losses['pred']['expression'], losses['truth']['expression'])
             jaw_loss = loss(losses['pred']['jaw'], losses['truth']['jaw'])
             loss_sum = shape_loss + expression_loss + jaw_loss
-            loss_sum.backward()
+            loss_sum.regenerate()
             optimizer.step()
             running_loss['epoch'] = tick
             running_loss['tick'] = i

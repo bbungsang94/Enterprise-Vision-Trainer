@@ -14,7 +14,7 @@
     },
     "task": {
         "save_interval": 1,
-        "log_interval": 144,
+        "log_interval": 1000,
         "train_ratio": 0.7,
         "resume": true,
         "visualize": false
