@@ -1,0 +1,6 @@
+{
+    "name": "FashionMNIST",
+    "root": "./data/FashionMNIST",
+    "train": true,
+    "download": true
+}

@@ -1,0 +1,5 @@
+{
+    "name": "CelebA",
+    "root": "./data/CelebA",
+    "download": true
+}
