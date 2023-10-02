@@ -4,7 +4,7 @@ from functools import partial
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
-from contents.reconstruction.fleap.model import BasicFLAEP, DiffuseFLAEP
+from contents.reconstruction.fleap.model import BasicFLAEP, ParamFLAEP
 from contents.generative_model.ddpm.model import Unet
 from contents.generative_model.skinpatch.dataset import SkinDataset, SkinDataLoader
 from contents.generative_model.skinpatch.model import SkinDiffusion
@@ -31,7 +31,7 @@ REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'SkinDDPMloader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
             'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
             'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
-            'DiffusionFLAEPmodel': partial(get_model_fn, model=DiffuseFLAEP),
+            'DiffusionFLAEPmodel': partial(get_model_fn, model=ParamFLAEP),
             'DDPMmodel': partial(get_model_fn, model=Unet),
             'SkinDDPMmodel': partial(get_model_fn, model=SkinDiffusion),
             'Diffusionloss': FakeLoss

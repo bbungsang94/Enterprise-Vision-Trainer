@@ -32,6 +32,7 @@ import torch
 import torch.nn as nn
 from smplx.lbs import batch_rodrigues, lbs, vertices2landmarks
 from smplx.utils import Struct, rot_mat_to_euler, to_np, to_tensor
+import open3d as o3d
 
 
 class FLAME(nn.Module):
@@ -43,9 +44,17 @@ class FLAME(nn.Module):
     def __init__(self, config):
         super(FLAME, self).__init__()
         with open(config.flame_model_path, "rb") as f:
-            self.flame_model = Struct(**pickle.load(f, encoding="latin1"))
+            model_info = pickle.load(f, encoding="latin1")
+            model = o3d.geometry.TriangleMesh()
+            model.vertices = o3d.utility.Vector3dVector(model_info['v_template'])
+            model.triangles = o3d.utility.Vector3iVector(model_info['f'])
+
+            stub = config.flame_model_path.split('\\')
+            o3d.io.write_triangle_mesh(stub[-1].replace('pkl', 'obj'), model)
+            self.flame_model = Struct(**model_info)
+            #self.flame_model = Struct(**pickle.load(f, encoding="latin1"))
         self.NECK_IDX = 1
-        self.batch_size = 1
+        self.batch_size = config.batch_size
         self.dtype = torch.float32
         self.use_face_contour = config.use_face_contour
         self.faces = self.flame_model.f
@@ -220,14 +229,14 @@ class FLAME(nn.Module):
             ],
             dim=1,
         )
-        neck_pose = neck_pose if neck_pose is not None else self.neck_pose
-        eye_pose = eye_pose if eye_pose is not None else self.eye_pose
+        neck_pose = neck_pose if neck_pose is not None else self.neck_pose[[0]].expand(batch_size, -1)
+        eye_pose = eye_pose if eye_pose is not None else self.eye_pose[[0]].expand(batch_size, -1)
         rotation_params = rotation_params if rotation_params is not None else self.rot[[0]].expand(batch_size, -1)
         jaw = jaw_params if jaw_params is not None else self.jaw[[0]].expand(batch_size, -1)
         full_pose = torch.cat(
             [rotation_params, neck_pose, jaw, eye_pose], dim=1
         )
-        template_vertices = self.v_template.unsqueeze(0).repeat(self.batch_size, 1, 1)
+        template_vertices = self.v_template.unsqueeze(0).repeat(batch_size, 1, 1)
 
         vertices, _ = lbs(
             betas,
@@ -240,9 +249,9 @@ class FLAME(nn.Module):
             self.lbs_weights,
         )
 
-        lmk_faces_idx = self.lmk_faces_idx.unsqueeze(dim=0).repeat(self.batch_size, 1)
+        lmk_faces_idx = self.lmk_faces_idx.unsqueeze(dim=0).repeat(batch_size, 1)
         lmk_bary_coords = self.lmk_bary_coords.unsqueeze(dim=0).repeat(
-            self.batch_size, 1, 1
+            batch_size, 1, 1
         )
 
         landmarks = vertices2landmarks(

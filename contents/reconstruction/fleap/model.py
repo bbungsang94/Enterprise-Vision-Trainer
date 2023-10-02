@@ -9,7 +9,7 @@ from contents.reconstruction.threeDMM.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
 
 
-class DiffuseFLAEP:
+class ParamFLAEP:
     def __init__(self, **params):
         self.latent_model = timm.create_model(params['Latent']['name'], pretrained=True, num_classes=0)
         o = self.latent_model(torch.randn(1, 3, 1024, 1024))
@@ -53,6 +53,13 @@ class DiffuseFLAEP:
     def load_state_dict(self, weights):
         self.FLAEP.load_state_dict(weights)
 
+
+class CoupledFLAEP(ParamFLAEP):
+    def __init__(self):
+        super(CoupledFLAEP, self).__init__()
+
+    def make_3d_head(self, gender, params):
+        pass
 
 class FLAEP(nn.Module):
     def __init__(self, o, params):
@@ -303,11 +310,11 @@ class PinLossCalculator:
         lip_points = landmark[lip_box()]
         eyebrow_points = landmark[eyebrow_box()]
 
-        # 코 중심으로부터의 턱 아래의 거리 - 입이 벌려진 높이
+        # 코 중심에서 턱 아래의 거리 - 입이 벌려진 높이
         lip_height = linalg.norm(lip_points[2] - lip_points[3])
         base = linalg.norm(jaw_tip - nose_tip) - lip_height
 
-        # 코 중심으로부터의 눈가 거리
+        # 코 중심에서 눈가 거리
         shape = linalg.norm(eyes_points[0] - nose_tip) / base
         e2 = linalg.norm(eyes_points[1] - nose_tip) / base
         shape = torch.cat((shape.unsqueeze(0), e2.unsqueeze(0)))
@@ -316,7 +323,7 @@ class PinLossCalculator:
         e4 = linalg.norm(eyes_points[5] - nose_tip) / base
         shape = torch.cat((shape, e4.unsqueeze(0)))
 
-        # 코 중심으로부터의 입 양 끝 거리
+        # 코 중심에서 입 양 끝 거리
         l1 = linalg.norm(lip_points[0] - nose_tip) / base
         shape = torch.cat((shape, l1.unsqueeze(0)))
         expression = l1
@@ -342,7 +349,7 @@ class PinLossCalculator:
         e8 = linalg.norm(eyes_points[6] - eyes_points[7]) / base
         expression = torch.cat((expression, e8.unsqueeze(0)))
 
-        # 코 중심으로부터의 눈썹의 거리
+        # 코 중심에서 눈썹의 거리
         b1 = linalg.norm(eyebrow_points[1] - nose_tip) / base
         expression = torch.cat((expression, b1.unsqueeze(0)))
         b2 = linalg.norm(eyebrow_points[3] - nose_tip) / base
