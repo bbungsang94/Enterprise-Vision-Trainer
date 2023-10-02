@@ -37,7 +37,7 @@ class Autoencdoer4x(nn.Module):
             nn.ReLU()
         )
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(8, 16, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(8, 16, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
             nn.ConvTranspose2d(16, 16, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(),
@@ -48,6 +48,7 @@ class Autoencdoer4x(nn.Module):
         )
 
     def forward(self, x) -> [torch.Tensor]:
+        # 872 712
         z = self.encoder(x)
         o = self.decoder(z)
         return o

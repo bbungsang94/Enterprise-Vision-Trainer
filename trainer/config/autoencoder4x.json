@@ -5,7 +5,7 @@
     },
     "modules": {
         "runner": "CPU",
-        "dataset": "FashionMNIST",
+        "dataset": "CelebA",
         "loader": "ForGen4x",
         "model": "AutoEncoder4x",
         "loss": "MSE",
