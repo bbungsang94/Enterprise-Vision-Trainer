@@ -3,6 +3,9 @@ from abc import abstractmethod, ABCMeta
 from functools import partial
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
+
+from contents.generative_model.autoencoder.dataset import GenLoader, Gen4xLoader
+from contents.generative_model.autoencoder.model import StaticAutoencdoer, Autoencdoer4x
 from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
 from contents.reconstruction.fleap.model import BasicFLAEP, ParamFLAEP
 from contents.generative_model.ddpm.model import Unet
@@ -34,6 +37,10 @@ REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'DiffusionFLAEPmodel': partial(get_model_fn, model=ParamFLAEP),
             'DDPMmodel': partial(get_model_fn, model=Unet),
             'SkinDDPMmodel': partial(get_model_fn, model=SkinDiffusion),
+            'ForGenloader': partial(get_dataloader_fn, dataloader=GenLoader),
+            'ForGen4xloader': partial(get_dataloader_fn, dataloader=Gen4xLoader),
+            'AutoEncoder4xmodel': partial(get_model_fn, model=Autoencdoer4x),
+            'AutoEncodermodel': partial(get_model_fn, model=StaticAutoencdoer),
             'Diffusionloss': FakeLoss
             }
 

@@ -1,5 +1,7 @@
 import math
 import os
+from typing import Dict
+
 import imageio
 import torch
 import einops
@@ -14,8 +16,10 @@ class ImageViewer(Base):
     def show(self, **kwargs):
         pass
 
-    def save(self, **kwargs):
-        pass
+    def save(self, images: Dict[str, torch.Tensor], save_path: str):
+        for filename, batch in images.items():
+            grid = make_grid(batch, nrow=int(math.sqrt(len(batch)))).cpu() * 255
+            write_jpeg(grid.type(dtype=torch.uint8), os.path.join(save_path, filename + ".jpg"))
 
     def summary(self, **kwargs):
         pass

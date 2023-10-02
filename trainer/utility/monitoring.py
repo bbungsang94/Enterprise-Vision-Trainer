@@ -41,7 +41,7 @@ def summary_device():
     # Write processor information
     target = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = torch.device(target)
-    if target is 'cpu':
+    if target == 'cpu':
         print(print_message(message='', line=''))
         print(print_message(message='CPU Setting(CUDA is not available)', padding=3, center=True, line=''))
         print(print_message(message=''))
