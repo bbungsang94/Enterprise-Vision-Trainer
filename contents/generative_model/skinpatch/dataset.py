@@ -1,5 +1,6 @@
 import os
 import timm
+import torchvision
 from torch.utils.data.dataloader import T_co
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -32,15 +33,16 @@ class SkinDataLoader(DataLoader):
         self.device = device
 
     def _collate_fn(self, batch) -> [torch.tensor, torch.tensor]:
-        _, batch_skins = self.make_batch(batch)
-        return batch_skins, torch.tensor(0.0, dtype=torch.float32)
+        batch_images, batch_skins = self.make_batch(batch)
+        return batch_images.detach(), batch_skins.detach()
 
     def make_batch(self, batch):
         batch_images = []
         batch_skins = []
 
         for stub in batch:
-            batch_images.append(stub[0])
+            resize = torchvision.transforms.Resize(256)
+            batch_images.append(resize(stub[0]))
             batch_skins.append(stub[1])
 
         batch_images = torch.stack(batch_images, dim=0).to(self.device)

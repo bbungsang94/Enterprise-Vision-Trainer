@@ -1,3 +1,4 @@
+import torch
 from einops import rearrange
 from torch import nn
 import torch.nn.functional as F
@@ -51,3 +52,47 @@ class DoubleConv(nn.Module):
             return F.gelu(x + self.double_conv(x))
         else:
             return self.double_conv(x)
+
+
+class EncoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, mid_channels=None, kernel=(3, 3)):
+        super().__init__()
+        if not mid_channels:
+            mid_channels = out_channels
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=kernel, padding="same"),
+            nn.BatchNorm2d(num_features=mid_channels),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=kernel, padding="same"),
+            nn.BatchNorm2d(num_features=out_channels),
+            nn.ReLU()
+        )
+        self.pool = nn.MaxPool2d(kernel_size=(2, 2))
+
+    def forward(self, x):
+        x = self.conv_block(x)
+        p = self.pool(x)
+        return x, p
+
+
+class DecoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, mid_channels=None, kernel=(3, 3)):
+        super().__init__()
+        if not mid_channels:
+            mid_channels = out_channels
+        self.upsample = nn.ConvTranspose2d(in_channels=in_channels, out_channels=in_channels // 2,
+                                           kernel_size=(2, 2), stride=2)
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=kernel, padding="same"),
+            nn.BatchNorm2d(num_features=mid_channels),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=kernel, padding="same"),
+            nn.BatchNorm2d(num_features=out_channels),
+            nn.ReLU()
+        )
+
+    def forward(self, x, skip):
+        x = self.upsample(x)
+        x = torch.cat([x, skip], dim=1)
+        x = self.conv_block(x)
+        return x

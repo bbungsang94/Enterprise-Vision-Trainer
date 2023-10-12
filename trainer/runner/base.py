@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from trainer.utility.io import CSVWriter, make_dir, clean_folder
+from trainer.utility.io import CSVWriter, make_dir, clean_folder, save_torch
 from torch.optim.optimizer import Optimizer
 from trainer.utility.monitoring import get_return_variable_count, print_message, get_input_variable_count
 from trainer.viewer.base import Base as Viewer
@@ -72,7 +72,8 @@ class Base(metaclass=ABCMeta):
         loader_output = get_return_variable_count(self._loader.collate_fn)
         print(print_message(message='Loader output: ' + str(loader_output), padding=2))
         print(print_message(message='Model Input: ' + str(model_input), padding=2))
-        print(print_message(message='Model output: ' + str(get_return_variable_count(self._model.forward)), padding=2))
+        # model_output = get_return_variable_count(self._model.forward)
+        print(print_message(message='Model output: ' + str(2), padding=2))
         epoch = 0
         tick = 0
         if self._params['task']['resume']:
@@ -86,7 +87,8 @@ class Base(metaclass=ABCMeta):
                     # Update loss from the best model
                     weights = torch.load(os.path.join(self._params['path']['checkpoint'],
                                                       self.model_name, "Best", "BestModel.pth"))
-                    self.best_loss = weights['loss']
+                    #self.best_loss = weights['loss']
+                    self.best_loss = 0.00002
 
                 epochs = [int(x) for x in epochs if x != "Best"]
                 epoch = max(epochs)
@@ -108,21 +110,22 @@ class Base(metaclass=ABCMeta):
 
     def _save_model(self, epoch: int, tick: int, prefix='', loss=None):
         timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
+        mode = "state_dict"
         if tick < 0:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
             timeline = "BestModel.pth"
+            mode = "jit"
         else:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
         if not os.path.exists(full_path):
             os.mkdir(full_path)
 
         loss = loss if loss is not None else 999.9
-        weights = {'model': self._model.state_dict(),
-                   'epochs': epoch,
+        weights = {'epochs': epoch,
                    'loss': loss}
         if "state_dict" in dir(self._loader):
             weights.update(self._loader.state_dict())
-        torch.save(weights, os.path.join(full_path, timeline))
+        save_torch(os.path.join(full_path, timeline), model=self._model, mode=mode, **weights)
 
     def _load_model(self, full_path):
         weights = torch.load(full_path)
@@ -141,9 +144,6 @@ class Base(metaclass=ABCMeta):
         for epoch in range(*self._params['task']['itr']):
             if not os.path.exists(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch)):
                 os.mkdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
-            # save_option
-            if epoch % self._params['task']['save_interval'] == 0:
-                self._save_model(epoch, self._params['task']['tick'] + 1)
 
             # train
             self._model.train()

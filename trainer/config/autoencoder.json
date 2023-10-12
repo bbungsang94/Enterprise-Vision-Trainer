@@ -4,19 +4,18 @@
         "log": "./output/log"
     },
     "modules": {
-        "runner": "CPU",
-        "dataset": "CelebA",
-        "loader": "ForGen",
-        "model": "AutoEncoder",
+        "runner": "SingleGPU",
+        "dataset": "SkinDDPM",
+        "loader": "SkinDDPM",
+        "model": "Unet",
         "loss": "MSE",
         "optimizer": "Adam",
         "viewer": "Image"
     },
     "task": {
-        "save_interval": 1,
-        "log_interval": 3000,
+        "log_interval": 1500,
         "train_ratio": 0.7,
-        "resume": false,
+        "resume": true,
         "visualize": false
     },
     "hyperparameters": {

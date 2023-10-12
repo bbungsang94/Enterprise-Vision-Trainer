@@ -2,7 +2,11 @@ import os
 import copy
 import json
 import shutil
+from datetime import datetime
+
 import pandas as pd
+import torch.nn
+
 from contents import REGISTRY as MODULES
 
 
@@ -45,6 +49,20 @@ def clean_folder(path):
         files = os.listdir(os.path.join(path, folder))
         if len(files) <= 1:
             shutil.rmtree(os.path.join(path, folder))
+
+
+def save_torch(filename: str, model: torch.nn.Module, mode: str = "state_dict", **kwargs):
+    if mode == "jit":
+        m = torch.jit.script(model)
+        with torch.no_grad():
+            m.eval()
+            m.save(filename)
+        if "BestModel" in filename:
+            timeline = datetime.now().strftime('%Y%m%d%H%M%S')
+            torch.save(kwargs, filename.replace('BestModel', timeline))
+    else:
+        kwargs.update({'model': model.state_dict()})
+        torch.save(kwargs, filename)
 
 
 class ModuleLoader:

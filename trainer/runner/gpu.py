@@ -34,7 +34,7 @@ class SingleGPURunner(Base):
         with torch.no_grad():
             for i, data in enumerate(progress):
                 inputs, labels = data
-                outputs = self._model(inputs)
+                _, outputs = self._model(inputs)
                 if outputs is None:
                     continue
                 if not isinstance(labels, torch.Tensor):
@@ -59,7 +59,7 @@ class SingleGPURunner(Base):
                 return 1.0
 
             inputs, labels = data
-            outputs = self._model(inputs)
+            latent, outputs = self._model(inputs)
 
             self._optimizer.zero_grad()
             if not isinstance(labels, torch.Tensor):
@@ -81,9 +81,11 @@ class SingleGPURunner(Base):
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
 
-                # vertices, landmarks = self._model.sub_module(inputs)
-                # self._viewer.save(image=inputs[0], vertices=vertices,
-                #                   faces=self._model.generator.faces, text=loss.item(), save_path=save_path)
+                viewer_kwargs = {'inputs': inputs,
+                                 'labels': labels,
+                                 'latent': latent,
+                                 'outputs': outputs}
+                self._viewer.save(images=viewer_kwargs, save_path=save_path)
                 avg_loss = running_loss / self._params['task']['log_interval']  # loss per batch
                 self._write_log(epoch=index, tick=i, loss=avg_loss, mode=mode)
                 self._save_model(index, i, loss=avg_loss)
