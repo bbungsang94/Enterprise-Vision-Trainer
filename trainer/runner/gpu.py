@@ -34,6 +34,8 @@ class SingleGPURunner(Base):
         with torch.no_grad():
             for i, data in enumerate(progress):
                 inputs, labels = data
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
                 _, outputs = self._model(inputs)
                 if outputs is None:
                     continue
@@ -59,6 +61,8 @@ class SingleGPURunner(Base):
                 return 1.0
 
             inputs, labels = data
+            inputs = inputs.to(self.device)
+            labels = labels.to(self.device)
             latent, outputs = self._model(inputs)
 
             self._optimizer.zero_grad()

@@ -4,9 +4,11 @@ from functools import partial
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
-from contents.generative_model.autoencoder.dataset import GenLoader, Gen4xLoader
-from contents.generative_model.autoencoder.model import StaticAutoencdoer, Autoencdoer4x, DoubleEncoder
-from contents.generative_model.unet.model import ClassicUnet
+from contents.basic.autoencoder.dataset import GenLoader, Gen4xLoader
+from contents.basic.autoencoder.model import StaticAutoencdoer, Autoencdoer4x, DoubleEncoder
+from contents.basic.facial_landmark.dataset import LandmarkDataset
+from contents.basic.facial_landmark.model import BasicLandmarker
+from contents.basic.unet.model import ClassicUnet
 from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
 from contents.reconstruction.fleap.model import BasicFLAEP, ParamFLAEP
 from contents.generative_model.ddpm.model import Unet
@@ -27,27 +29,29 @@ def get_model_fn(model, **kwargs) -> nn.Module:
     return model(**kwargs)
 
 
-REGISTRY = {'FLAEPdataset': partial(get_dataset_fn, dataset=FLAEPDataset),
-            'FLAEPv2dataset': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
-            'SkinDDPMdataset': partial(get_dataset_fn, dataset=SkinDataset),
-            'FLAEPloader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
-            'FLAEPv2loader': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
-            'SkinDDPMloader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
+REGISTRY = {'FLAEP_dataset': partial(get_dataset_fn, dataset=FLAEPDataset),
+            'FLAEPv2_dataset': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
+            'SkinDDPM_dataset': partial(get_dataset_fn, dataset=SkinDataset),
+            'Landmark_dataset': partial(get_dataset_fn, dataset=LandmarkDataset),
+            'FLAEP_loader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
+            'FLAEPv2_loader': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
+            'SkinDDPM_loader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
             'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
+            'ForGen_loader': partial(get_dataloader_fn, dataloader=GenLoader),
+            'ForGen4x_loader': partial(get_dataloader_fn, dataloader=Gen4xLoader),
             'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
-            'DiffusionFLAEPmodel': partial(get_model_fn, model=ParamFLAEP),
-            'DDPMmodel': partial(get_model_fn, model=Unet),
-            'SkinDDPMmodel': partial(get_model_fn, model=SkinDiffusion),
-            'ForGenloader': partial(get_dataloader_fn, dataloader=GenLoader),
-            'ForGen4xloader': partial(get_dataloader_fn, dataloader=Gen4xLoader),
-            'AutoEncoder4xmodel': partial(get_model_fn, model=Autoencdoer4x),
-            'AutoEncodermodel': partial(get_model_fn, model=DoubleEncoder),
-            'Unetmodel': partial(get_model_fn, model=ClassicUnet),
+            'DiffusionFLAEP_model': partial(get_model_fn, model=ParamFLAEP),
+            'DDPM_model': partial(get_model_fn, model=Unet),
+            'SkinDDPM_model': partial(get_model_fn, model=SkinDiffusion),
+            'AutoEncoder4x_model': partial(get_model_fn, model=Autoencdoer4x),
+            'AutoEncoder_model': partial(get_model_fn, model=DoubleEncoder),
+            'Unet_model': partial(get_model_fn, model=ClassicUnet),
+            'Landmark_model': partial(get_model_fn, model=BasicLandmarker),
             'Diffusionloss': FakeLoss
             }
 
 
-class Base(metaclass=ABCMeta):
+class TorchBase(metaclass=ABCMeta):
     def __init__(self, **kwargs):
         self.device = torch.device("cpu")
 

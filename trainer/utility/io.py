@@ -92,8 +92,9 @@ class ModuleLoader:
 
     def get_safety_registry(self, kind, key, **kwargs):
         args = self.get_args(kind, self.params['modules'][kind], **kwargs)
-        if key + kind in MODULES:
-            return MODULES[key + kind](**args), args
+        key = key + '_' + kind
+        if key in MODULES:
+            return MODULES[key](**args), args
         else:
             return None, args
 

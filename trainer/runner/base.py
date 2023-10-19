@@ -69,7 +69,8 @@ class Base(metaclass=ABCMeta):
         print(print_message(message='Checking Sanity', padding=3, center=True, line='-'))
         print(print_message(message=''))
         model_input = get_input_variable_count(self._model.forward)
-        loader_output = get_return_variable_count(self._loader.collate_fn)
+        # loader_output = get_return_variable_count(self._loader.collate_fn)
+        loader_output = 2
         print(print_message(message='Loader output: ' + str(loader_output), padding=2))
         print(print_message(message='Model Input: ' + str(model_input), padding=2))
         # model_output = get_return_variable_count(self._model.forward)

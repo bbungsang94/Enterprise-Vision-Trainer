@@ -55,24 +55,28 @@ class DoubleConv(nn.Module):
 
 
 class EncoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, mid_channels=None, kernel=(3, 3)):
+    def __init__(self, in_channels, out_channels, mid_channels=None, activation="ReLU", kernel=(3, 3), outputs=2):
         super().__init__()
         if not mid_channels:
             mid_channels = out_channels
         self.conv_block = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=mid_channels, kernel_size=kernel, padding="same"),
             nn.BatchNorm2d(num_features=mid_channels),
-            nn.ReLU(),
+            getattr(nn, activation)(),
             nn.Conv2d(in_channels=mid_channels, out_channels=out_channels, kernel_size=kernel, padding="same"),
             nn.BatchNorm2d(num_features=out_channels),
-            nn.ReLU()
+            getattr(nn, activation)()
         )
         self.pool = nn.MaxPool2d(kernel_size=(2, 2))
+        self.outputs = outputs
 
     def forward(self, x):
         x = self.conv_block(x)
-        p = self.pool(x)
-        return x, p
+        if self.outputs > 1:
+            p = self.pool(x)
+            return x, p
+        else:
+            return x
 
 
 class DecoderBlock(nn.Module):

@@ -1,7 +1,7 @@
 import math
 import os
 from typing import Dict
-
+import cv2
 import imageio
 import torch
 import einops
@@ -24,6 +24,57 @@ class ImageViewer(Base):
     def summary(self, **kwargs):
         pass
 
+
+class LandmarkViewer(Base):
+    def show(self, **kwargs):
+        pass
+
+    def save(self, images: Dict[str, torch.Tensor], save_path: str):
+        grid = make_grid(images['inputs'], nrow=int(math.sqrt(len(images['inputs'])))).cpu() * 255
+        write_jpeg(grid.type(dtype=torch.uint8), os.path.join(save_path, "input_images" + ".jpg"))
+
+        grid = make_grid(images['latent'], nrow=int(math.sqrt(len(images['latent'])))).cpu() * 255
+        write_jpeg(grid.type(dtype=torch.uint8), os.path.join(save_path, "latent_images" + ".jpg"))
+
+        for i in range(len(images['inputs'])):
+            draw_image = self.draw(images['inputs'][i], images['outputs'][i], images['labels'][i], gap=True)
+            cv2.imwrite(os.path.join(save_path, "sample-" + str(i) + ".jpg"), draw_image)
+
+    def draw(self, image: torch.Tensor, a, b, gap=False):
+        rows, cols = 1024, 1024
+        image = image.cpu().numpy() * 255
+        image = image.transpose(1, 2, 0).astype(np.uint8)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        image = cv2.resize(image, (1024, 1024))
+        for a_point, b_point in zip(a, b):
+            a_x = min(math.floor(a_point[0] * cols), cols - 1)
+            a_y = min(math.floor(a_point[1] * rows), rows - 1)
+            if a_point.shape[0] == 3:
+                a_z = a_point[2]
+            else:
+                a_z = None
+            b_x = min(math.floor(b_point[0] * cols), cols - 1)
+            b_y = min(math.floor(b_point[1] * rows), rows - 1)
+            if b_point.shape[0] == 3:
+                b_z = b_point[2]
+            else:
+                b_z = None
+
+            if a_z is None or b_z is None:
+                depth = 255
+            else:
+                depth = int(torch.clamp(abs(a_z-b_z) * 5, min=-0.0, max=1.0) * 255)
+
+            if gap:
+                image = cv2.line(image, (a_x, a_y), (b_x, b_y), (0, 255, 0), 2)
+
+            image = cv2.circle(image, (a_x, a_y), 4, (0, 0, depth), 4)
+            image = cv2.circle(image, (b_x, b_y), 4, (depth, 0, 0), 4)
+
+        return image
+
+    def summary(self, **kwargs):
+        pass
 
 class DiffusionViewer(Base):
     def show(self, **kwargs):
