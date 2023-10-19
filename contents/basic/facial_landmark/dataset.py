@@ -10,7 +10,7 @@ from torchvision import transforms
 
 
 class LandmarkDataset(Dataset):
-    def __init__(self, dataset_root, input_folder, label_folder, prefix='68-'):
+    def __init__(self, dataset_root, input_folder, label_folder, prefix='478-'):
         self.root = dataset_root
         self.input_data = os.listdir(os.path.join(self.root, input_folder))
         self.label_data = os.listdir(os.path.join(self.root, label_folder))

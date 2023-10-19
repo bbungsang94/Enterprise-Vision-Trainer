@@ -35,15 +35,15 @@ class BasicLandmarker(nn.Module):
         )
 
         self.head_x = nn.Sequential(
-            nn.Linear(128, 68),
+            nn.Linear(128, 478),
             nn.Sigmoid()
         )
         self.head_y = nn.Sequential(
-            nn.Linear(128, 68),
+            nn.Linear(128, 478),
             nn.Sigmoid()
         )
         self.head_z = nn.Sequential(
-            nn.Linear(128, 68),
+            nn.Linear(128, 478),
             nn.Tanh()
         )
 

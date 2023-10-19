@@ -66,10 +66,10 @@ class LandmarkViewer(Base):
                 depth = int(torch.clamp(abs(a_z-b_z) * 5, min=-0.0, max=1.0) * 255)
 
             if gap:
-                image = cv2.line(image, (a_x, a_y), (b_x, b_y), (0, 255, 0), 2)
+                image = cv2.line(image, (a_x, a_y), (b_x, b_y), (0, depth, 0), 2)
 
-            image = cv2.circle(image, (a_x, a_y), 4, (0, 0, depth), 4)
-            image = cv2.circle(image, (b_x, b_y), 4, (depth, 0, 0), 4)
+            image = cv2.circle(image, (a_x, a_y), 4, (0, 0, 255), 4)
+            image = cv2.circle(image, (b_x, b_y), 4, (255, 0, 0), 4)
 
         return image
 
