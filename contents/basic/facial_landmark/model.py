@@ -19,31 +19,28 @@ class BasicLandmarker(nn.Module):
             nn.SiLU(),
             nn.Conv2d(32, 16, 3, stride=2, padding=1),
             nn.BatchNorm2d(num_features=16),
-            nn.SiLU(),
-            nn.Conv2d(16, 8, 3, stride=2, padding=1),
-            nn.BatchNorm2d(num_features=8),
-            nn.SiLU(),
+            nn.SiLU()
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(512, 256),
+            nn.Linear(4096, 2048),
             nn.SiLU(),
             nn.Dropout(),
-            nn.Linear(256, 128),
+            nn.Linear(2048, 1024),
             nn.SiLU(),
-            nn.Dropout()
+            nn.Dropout(),
         )
 
         self.head_x = nn.Sequential(
-            nn.Linear(128, 478),
+            nn.Linear(1024, 478),
             nn.Sigmoid()
         )
         self.head_y = nn.Sequential(
-            nn.Linear(128, 478),
+            nn.Linear(1024, 478),
             nn.Sigmoid()
         )
         self.head_z = nn.Sequential(
-            nn.Linear(128, 478),
+            nn.Linear(1024, 478),
             nn.Tanh()
         )
 

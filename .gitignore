@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 /facial_landmarks/images
 /data/
+/output
+/results

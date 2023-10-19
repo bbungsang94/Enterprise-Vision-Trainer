@@ -1,0 +1,6 @@
+{
+    "dataset_root": "D:\\Creadto\\Heritage\\Dataset\\Temp",
+    "input_folder": "images",
+    "label_folder": "landmarks",
+    "prefix": "478-"
+}
