@@ -23,6 +23,7 @@ class LandmarkDataset(Dataset):
         ])
         self.resizer = torchvision.transforms.Resize((256, 256), antialias=True)
         self.x_data = []
+        self.shapes = []
         self.y_data = []
         
         # 예상되는 램 사이즈를 보고 sanity check해야함

@@ -41,11 +41,11 @@ class LandmarkViewer(Base):
             cv2.imwrite(os.path.join(save_path, "sample-" + str(i) + ".jpg"), draw_image)
 
     def draw(self, image: torch.Tensor, a, b, gap=False):
-        rows, cols = 1024, 1024
+        rows, cols = 512, 512
         image = image.cpu().numpy() * 255
         image = image.transpose(1, 2, 0).astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        image = cv2.resize(image, (1024, 1024))
+        image = cv2.resize(image, (rows, cols))
         for a_point, b_point in zip(a, b):
             a_x = min(math.floor(a_point[0] * cols), cols - 1)
             a_y = min(math.floor(a_point[1] * rows), rows - 1)
