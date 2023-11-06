@@ -16,3 +16,14 @@ class Base(metaclass=ABCMeta):
     @abstractmethod
     def summary(self, **kwargs):
         pass
+
+
+class Concrete(Base):
+    def show(self, **kwargs):
+        pass
+
+    def save(self, **kwargs):
+        pass
+
+    def summary(self, **kwargs):
+        pass

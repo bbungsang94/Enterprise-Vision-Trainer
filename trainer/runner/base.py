@@ -115,7 +115,7 @@ class Base(metaclass=ABCMeta):
         if tick < 0:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
             timeline = "BestModel.pth"
-            mode = "jit"
+            # mode = "jit"
         else:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
         if not os.path.exists(full_path):

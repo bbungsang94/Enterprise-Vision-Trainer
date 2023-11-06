@@ -13,11 +13,14 @@ if __name__ == "__main__":
     module_loader = ModuleLoader(root=config_root, params=read_json(os.path.join(config_root, parameter['address'])))
 
     dataset = module_loader.get_module('dataset', base=datasets)
-    dataset_size = len(dataset)
-    train_size = int(dataset_size * module_loader.params['task']['train_ratio'])
-    eval_size = dataset_size - train_size
 
-    train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
+    if module_loader.params['task']['train_ratio'] == 0.0:
+        train_dataset, eval_dataset = dataset.split()
+    else:
+        dataset_size = len(dataset)
+        train_size = int(dataset_size * module_loader.params['task']['train_ratio'])
+        eval_size = dataset_size - train_size
+        train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
     train_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=train_dataset)
     eval_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=eval_dataset)
     loss = module_loader.get_module('loss', base=nn)

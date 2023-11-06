@@ -30,13 +30,12 @@ class SingleGPURunner(Base):
         self._writer.flush()
 
     def _run_eval_epoch(self, index, progress):
+        self._model.use_smpl = True
         running_loss = 0.
         with torch.no_grad():
             for i, data in enumerate(progress):
                 inputs, labels = data
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
-                _, outputs = self._model(inputs)
+                _, outputs = self._model(*inputs)
                 if outputs is None:
                     continue
                 if not isinstance(labels, torch.Tensor):
@@ -44,13 +43,16 @@ class SingleGPURunner(Base):
                     for itr in range(1, len(labels)):
                         loss += self._loss(outputs[itr], labels[itr].to(self.device))
                 else:
-                    loss = self._loss(outputs, labels.to(self.device))
+                    loss = self._loss(outputs.to(self.device), labels.to(self.device))
                 running_loss += loss.item()
+                line = "evaluation loss: %.4f, ticks: %06d" % (loss.item(), i)
+                progress.set_description(line)
 
             avg_loss = running_loss / (i + 1)
             return avg_loss
 
     def _run_train_epoch(self, index, progress):
+        self._model.use_smpl = False
         running_loss = 0.
         avg_loss = 0
         mode = progress.desc
@@ -61,9 +63,7 @@ class SingleGPURunner(Base):
                 return 1.0
 
             inputs, labels = data
-            inputs = inputs.to(self.device)
-            labels = labels.to(self.device)
-            latent, outputs = self._model(inputs)
+            latent, outputs = self._model(*inputs)
 
             self._optimizer.zero_grad()
             if not isinstance(labels, torch.Tensor):

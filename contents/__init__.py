@@ -15,6 +15,8 @@ from contents.generative_model.ddpm.model import Unet
 from contents.generative_model.skinpatch.dataset import SkinDataset, SkinDataLoader
 from contents.generative_model.skinpatch.model import SkinDiffusion
 from contents.generative_model.skinpatch.loss import FakeLoss
+from contents.regression.stm.model import STMRegression
+from contents.regression.stm.dataset import STMWrapper, STMLoader
 
 
 def get_dataset_fn(dataset, **kwargs) -> Dataset:
@@ -33,12 +35,14 @@ REGISTRY = {'FLAEP_dataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'FLAEPv2_dataset': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
             'SkinDDPM_dataset': partial(get_dataset_fn, dataset=SkinDataset),
             'Landmark_dataset': partial(get_dataset_fn, dataset=LandmarkDataset),
+            'STM_dataset': partial(get_dataset_fn, dataset=STMWrapper),
             'FLAEP_loader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
             'FLAEPv2_loader': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
             'SkinDDPM_loader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
             'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
             'ForGen_loader': partial(get_dataloader_fn, dataloader=GenLoader),
             'ForGen4x_loader': partial(get_dataloader_fn, dataloader=Gen4xLoader),
+            'STM_loader': partial(get_dataloader_fn, dataloader=STMLoader),
             'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
             'DiffusionFLAEP_model': partial(get_model_fn, model=ParamFLAEP),
             'DDPM_model': partial(get_model_fn, model=Unet),
@@ -47,6 +51,7 @@ REGISTRY = {'FLAEP_dataset': partial(get_dataset_fn, dataset=FLAEPDataset),
             'AutoEncoder_model': partial(get_model_fn, model=DoubleEncoder),
             'Unet_model': partial(get_model_fn, model=ClassicUnet),
             'Landmark_model': partial(get_model_fn, model=BasicLandmarker),
+            'STM_model': partial(get_model_fn, model=STMRegression),
             'Diffusionloss': FakeLoss
             }
 
