@@ -7,36 +7,47 @@ from trainer.utility.io import read_json, ModuleLoader
 from trainer.runner import REGISTRY as RUNNER
 from trainer.viewer import REGISTRY as VIEWER
 
-if __name__ == "__main__":
-    config_root = './trainer/config'
-    parameter = read_json(os.path.join(config_root, 'default.json'))
-    module_loader = ModuleLoader(root=config_root, params=read_json(os.path.join(config_root, parameter['address'])))
 
-    dataset = module_loader.get_module('dataset', base=datasets)
+def get_loader(root='./trainer/config'):
+    parameter = read_json(os.path.join(root, 'default.json'))
+    module_loader = ModuleLoader(root=root, params=read_json(os.path.join(root, parameter['address'])))
+    return module_loader
 
-    if module_loader.params['task']['train_ratio'] == 0.0:
+
+def get_dataloaders(loader: ModuleLoader):
+    dataset = loader.get_module('dataset', base=datasets)
+
+    if loader.params['task']['train_ratio'] == 0.0:
         train_dataset, eval_dataset = dataset.split()
     else:
         dataset_size = len(dataset)
-        train_size = int(dataset_size * module_loader.params['task']['train_ratio'])
+        train_size = int(dataset_size * loader.params['task']['train_ratio'])
         eval_size = dataset_size - train_size
         train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
-    train_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=train_dataset)
-    eval_loader = module_loader.get_module('loader', base=torch.utils.data, dataset=eval_dataset)
-    loss = module_loader.get_module('loss', base=nn)
-    model = module_loader.get_module('model', base=models)
-    optimizer = module_loader.get_module('optimizer', base=optim, params=model.parameters())
+    train_loader = loader.get_module('loader', base=torch.utils.data, dataset=train_dataset)
+    eval_loader = loader.get_module('loader', base=torch.utils.data, dataset=eval_dataset)
+    return train_loader, eval_loader
 
-    args = module_loader.get_args('viewer', module_loader.params['modules']['viewer'])
-    viewer = VIEWER[module_loader.params['modules']['viewer']](**args)
 
-    runner = RUNNER[module_loader.params['modules']['runner']](
-        loaders=(train_loader, eval_loader),
-        model=model,
-        loss=loss,
-        optimizer=optimizer,
-        params=module_loader.params,
-        viewer=viewer
-    )
+def run():
+    loader = get_loader()
 
+    args = loader.get_args('viewer', loader.params['modules']['viewer'])
+    viewer = VIEWER[loader.params['modules']['viewer']](**args)
+    model = loader.get_module('model', base=models)
+
+    kwargs = {
+        'loaders': get_dataloaders(loader),
+        'model': model,
+        'loss': loader.get_module('loss', base=nn),
+        'metric': loader.get_module('metric', base=nn),
+        'optimizer': loader.get_module('optimizer', base=optim, params=model.parameters()),
+        'viewer': viewer,
+        'params': loader.params,
+    }
+    runner = RUNNER[loader.params['modules']['runner']](**kwargs)
     runner.loop()
+
+
+if __name__ == "__main__":
+    run()

@@ -30,7 +30,7 @@ def get_input_variable_count(func):
     return len(signature.parameters)
 
 
-def summary_device():
+def summary_device(bypass=False):
     # Write OS information
     print(print_message(message='', line='='))
     print(print_message(message='Operation System', padding=3, center=True, line=''))
@@ -41,7 +41,7 @@ def summary_device():
     # Write processor information
     target = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = torch.device(target)
-    if target == 'cpu':
+    if target == 'cpu' or bypass:
         print(print_message(message='', line=''))
         print(print_message(message='CPU Setting(CUDA is not available)', padding=3, center=True, line=''))
         print(print_message(message=''))

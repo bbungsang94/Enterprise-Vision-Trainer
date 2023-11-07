@@ -73,7 +73,8 @@ class ModuleLoader:
 
     def get_module(self, kind, base, **kwargs):
         key = self.params['modules'][kind]
-
+        if 'metric' == kind:
+            kind = 'loss'
         func, args = self.get_safety_registry(kind, key, **kwargs)
         if func is None:
             key = args['name']
@@ -91,7 +92,7 @@ class ModuleLoader:
         return args
 
     def get_safety_registry(self, kind, key, **kwargs):
-        args = self.get_args(kind, self.params['modules'][kind], **kwargs)
+        args = self.get_args(kind, key, **kwargs)
         key = key + '_' + kind
         if key in MODULES:
             return MODULES[key](**args), args

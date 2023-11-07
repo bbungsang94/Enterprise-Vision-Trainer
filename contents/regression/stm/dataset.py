@@ -12,6 +12,7 @@ class STMWrapper:
     def __init__(self, train_root, test_path):
         self.train = STMTrainSet(dataset_root=train_root)
         self.test = STMTestSet(dataset_path=test_path)
+        #self.test = STMEvalSet(dataset_root=train_root.replace('parameter', 'eval'))
 
     def split(self):
         return self.train, self.test
@@ -27,12 +28,44 @@ class STMTrainSet(Dataset):
         for file in pbar:
             pth = torch.load(os.path.join(dataset_root, file))
             genders.append(pth['input']['gender'])
+            measure = torch.FloatTensor(pth['output']['measure'])
+            if pth['input']['gender'] == "male":
+                measure[5] = 0.0
+                measure[29] = 0.0
             label.append(pth['input']['shape'])
-            x.append(torch.FloatTensor(pth['output']['measure']))
+            x.append(measure)
 
         self.x_data = torch.stack(x)
         self.gender = genders
         self.y_data = torch.concat(label).to(torch.float32)
+
+    def __len__(self):
+        return len(self.x_data)
+
+    def __getitem__(self, idx):
+        return (self.x_data[idx], self.gender[idx]), self.y_data[idx]
+
+
+class STMEvalSet(Dataset):
+    def __init__(self, dataset_root):
+        files = os.listdir(dataset_root)
+        genders = []
+        x = []
+        label = []
+        pbar = tqdm(files, desc="Loading eval dataset")
+        for file in pbar:
+            pth = torch.load(os.path.join(dataset_root, file))
+            genders.append(pth['input']['gender'])
+            measure = torch.FloatTensor(pth['output']['measure'])
+            if pth['input']['gender'] == "male":
+                measure[5] = 0.0
+                measure[29] = 0.0
+            label.append(measure.detach())
+            x.append(measure.detach())
+
+        self.x_data = torch.stack(x)
+        self.gender = genders
+        self.y_data = torch.stack(label)
 
     def __len__(self):
         return len(self.x_data)

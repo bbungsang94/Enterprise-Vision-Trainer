@@ -17,8 +17,11 @@ class STMRegression(nn.Module):
     def __init__(self, input_dim, output_dim, smpl_root, pin_root, circ_root):
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 128)  # 첫 번째 fully connected layer
+        self.bn1 = nn.BatchNorm1d(num_features=128)
         self.fc2 = nn.Linear(128, 256)  # 두 번째 fully connected layer
+        self.bn2 = nn.BatchNorm1d(num_features=256)
         self.fc3 = nn.Linear(256, 512)  # 세 번째 fully connected layer
+        self.bn3 = nn.BatchNorm1d(num_features=512)
         self.fc4 = nn.Linear(512, output_dim)  # 출력 레이어
 
         self.relu = nn.ReLU()  # 활성화 함수로 ReLU 사용
@@ -40,17 +43,17 @@ class STMRegression(nn.Module):
         self.taylor = Taylor(tape=get_interactions(), pin=(standing, sitting), circ_dict=circ_dict)
 
     def forward(self, x, gender):
-        x = self.fc1(x)
+        x = self.bn1(self.fc1(x))
         x = self.relu(x)
         x = self.dropout(x)
 
-        x = self.fc2(x)
+        x = self.bn2(self.fc2(x))
         x = self.relu(x)
         x = self.dropout(x)
 
-        x = self.fc3(x)
+        x = self.bn3(self.fc3(x))
         x = self.relu(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
 
         result = self.fc4(x)
         if self.use_smpl:
