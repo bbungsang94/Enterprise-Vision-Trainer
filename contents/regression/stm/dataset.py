@@ -11,8 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 class STMWrapper:
     def __init__(self, train_root, test_path):
         self.train = STMTrainSet(dataset_root=train_root)
-        self.test = STMTestSet(dataset_path=test_path)
-        #self.test = STMEvalSet(dataset_root=train_root.replace('parameter', 'eval'))
+        #self.test = STMTestSet(dataset_path=test_path)
+        self.test = STMEvalSet(dataset_root=train_root.replace('parameter', 'eval'))
 
     def split(self):
         return self.train, self.test

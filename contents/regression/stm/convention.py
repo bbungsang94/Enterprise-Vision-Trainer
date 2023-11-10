@@ -61,8 +61,8 @@ def get_coordinates():
         [-0.000003, 0.100244, -0.289525],  # 배꼽수준허리뒤점(Posterior Waist omphalion)
         [-0.061006, 0.153625, -0.415752],  # 엉덩이돌출점(Buttock Protrusion, 우)
         [0.061006, 0.153625, -0.415752],  # 엉덩이돌출점(Buttock Protrusion, 좌)
-        [-0.061006, 0.153625, -0.415752],  # 엉덩이돌출점수준(Buttock Protrusion level, 우)
-        [0.061006, 0.153625, -0.415752],  # 엉덩이돌출점수준(Buttock Protrusion level, 좌)
+        [-0.161288, 0.072614, -0.414878],  # 엉덩이돌출점수준(Buttock Protrusion level, 우)
+        [0.161288, 0.072614, -0.414878],  # 엉덩이돌출점수준(Buttock Protrusion level, 좌)
         [-0.062043, 0.13964, -0.367867],  # Top-hip점(Top-hip, 우)
         [0.062042, 0.139637, -0.367867],  # Top-hip점(Top-hip, 좌)
         [-0.062043, 0.13964, -0.367867],  # Top-hip 수준(Top-hip level, 우)
@@ -90,6 +90,8 @@ def get_coordinates():
         [0.106494, 0.121945, -1.02879],  # 장딴지돌출점(Calf Protrusion, 좌)
         [-0.095621, 0.023354, -1.26868],  # 종아리아래점(Inferior Leg, 우)
         [0.095621, 0.023354, -1.26868],  # 종아리아래점(Inferior Leg, 좌)
+        [-0.073176, 0.072344, -1.26141],  # 안쪽발목점(Inner Ankle, 우)
+        [-0.125678, 0.079713, -1.25979],  # 안쪽발목점(Outer Ankle, 우)
         [-0.062418, 0.04713, -1.31871],  # 안쪽복사점(Medial Malleous, 우)
         [0.062418, 0.04713, -1.31871],  # 안쪽복사점(Medial Malleous, 좌)
         [-0.128206, 0.082131, -1.31363],  # 가쪽복사점(Lateral Malleous, 우)
@@ -218,6 +220,8 @@ def get_names():
         "장딴지돌출점, Calf Protrusion, 좌": -1,
         "종아리아래점, Inferior Leg, 우": -1,
         "종아리아래점, Inferior Leg, 좌": -1,
+        "안쪽발목점, Inner Ankle, 우": -1,
+        "안쪽발목점, Outer Ankle, 우": -1,
         "안쪽복사점, Medial Malleous, 우": -1,
         "안쪽복사점, Medial Malleous, 좌": -1,
         "가쪽복사점, Lateral Malleous, 우": -1,
@@ -273,7 +277,7 @@ def get_interactions():
         ("가슴너비", "Chest Breadth", ["Axilla, 좌", "Axilla, 우"], "width", "standing"),
         ("허리너비", "Waist Breadth", ["Lateral Waist, 좌", "Lateral Waist, 우"], "width", "standing"),
         ("엉덩이너비", "Hip Width", ["Buttock Protrusion level, 좌", "Buttock Protrusion level, 우"], "width", "standing"),
-        ("발목너비", "Ankle Width", ["Inferior Leg, 좌", "Inferior Leg, 우"], "width", "standing"),
+        ("발목너비", "Ankle Width", ["안쪽발목점, Inner Ankle, 우", "안쪽발목점, Outer Ankle, 우"], "width", "standing"),
         ("겨드랑두께", "Armscye Depth", ["Posterior Axilla, 우", "Anterior Axilla, 우"], "depth", "t"),
         ("가슴두께", "Chest Depth, Standing", ["Anterior MidAxilla, 우", "Posterior MidAxilla, 우"], "depth", "t"),
         ("허리두께", "Waist Depth", ["Anterior Waist", "Posterior Waist"], "depth", "t"),
@@ -307,7 +311,7 @@ def get_interactions():
         ("위팔길이", "Upperarm Length", ["Acromion, 우", "Bottom olecranon, 우"], "width", "t"),
         ("팔길이", "Arm Length", ["Acromion, 우", "Ulnar Styloid, 우"], "width", "t"),
         ("앉은키", "Sitting Height", ["Occipital bone", "Gluteal Fold, 우"], "height", "sitting"),
-        ("앉은배두께", "Sitting Height", ["Occipital bone", "Posterior Waist"], "depth", "sitting"),
+        ("앉은배두께", "Sitting Height", ["Stomach tip", "Posterior Waist"], "depth", "sitting"),
         ("팔꿈치주먹수평길이", "Elbow-Grip Length", ["Hand center, 우", "Bottom olecranon, 우"], "depth", "sitting"),
     ]
     return interactions

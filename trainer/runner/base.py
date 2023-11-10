@@ -82,7 +82,7 @@ class Base(metaclass=ABCMeta):
                     # Update loss from the best model
                     weights = torch.load(os.path.join(self._params['path']['checkpoint'],
                                                       self.model_name, "Best", "BestModel.pth"))
-                    #self.best_loss = weights['loss']
+                    # self.best_loss = weights['loss']
                     self.best_loss = 0.00002
 
                 epochs = [int(x) for x in epochs if x != "Best"]
@@ -102,6 +102,8 @@ class Base(metaclass=ABCMeta):
         self._params['task']['tick'] = tick
         if (loader_output - 1) != model_input:
             print("'\033[91m" + "CONFLICT: Different loader output with model input shapes" + "\033[0m")
+        if "sample" in dir(self._loader) and self._params['task']['visualize']:
+            self._viewer.show(**self._loader.sample())
 
     def _save_model(self, epoch: int, tick: int, prefix='', loss=None):
         timeline = prefix + datetime.now().strftime('%Y%m%d%H%M%S') + '.pth'
@@ -109,7 +111,7 @@ class Base(metaclass=ABCMeta):
         if tick < 0:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
             timeline = "BestModel.pth"
-            mode = "jit"
+            # mode = "jit"
         else:
             full_path = os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch, "%08d" % tick)
         if not os.path.exists(full_path):
@@ -130,12 +132,6 @@ class Base(metaclass=ABCMeta):
 
     def loop(self) -> None:
         self._check_sanity()
-        outer_pbar = tqdm(range(*self._params['task']['itr']),
-                          desc='Outer progress is created', position=0, leave=True)
-
-        if "sample" in dir(self._loader) and self._params['task']['visualize']:
-            self._viewer.show(**self._loader.sample())
-
         for epoch in range(*self._params['task']['itr']):
             if not os.path.exists(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch)):
                 os.mkdir(os.path.join(self._params['path']['checkpoint'], self.model_name, "%08d" % epoch))
@@ -153,22 +149,22 @@ class Base(metaclass=ABCMeta):
 
             # recording
             self._writer.add_scalars('Training vs Evaluation Loss',
-                                     {'Training': train_mu, 'Evaluation': eval_mu, 'Epoch': epoch})
+                                     {'Epoch': epoch, 'Training': train_mu, 'Evaluation': eval_mu})
             self._writer.flush()
 
-            line = "avg_loss(train): %.4f, avg_loss(eval): %.4f, epoch: %06d" % (train_mu, eval_mu, epoch)
-            # outer_pbar.set_description(line)
-            # print(line)
+            # update best model
+            self.__update_best(loss=eval_mu, epoch=epoch)
 
-            if self.best_loss > eval_mu:
-                self.best_loss = eval_mu
-                print("Updated best model.")
-                self._save_model(epoch, -1, loss=self.best_loss)
-                if "summary" in dir(self._model) and "sample" in dir(self._loader):
-                    result = self._model.summary(**self._loader.sample())
-                    result['save_path'] = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
-                    result['model'] = self._model
-                    self._viewer.summary(**result)
+    def __update_best(self, loss, epoch):
+        if self.best_loss > loss:
+            self.best_loss = loss
+            print("Updated best model.")
+            self._save_model(epoch, -1, loss=self.best_loss)
+            if "summary" in dir(self._model) and "sample" in dir(self._loader):
+                result = self._model.summary(**self._loader.sample())
+                result['save_path'] = os.path.join(self._params['path']['checkpoint'], self.model_name, "Best")
+                result['model'] = self._model
+                self._viewer.summary(**result)
 
     def _run_train_epoch(self, index, progress):
         self._model.train()

@@ -13,6 +13,13 @@ from contents.regression.stm.taylor import Taylor
 from contents.regression.stm.utilities import rodrigues, with_zeros, pack
 
 
+def note():
+    #GNN으로 갈 필요가 있다.
+    #다만 Regression model 일부를 수정해야함
+    #ReLU를 사용하다보니 Batch norm을 ReLU뒤로 옮겨봤다
+    pass
+
+
 class STMRegression(nn.Module):
     def __init__(self, input_dim, output_dim, smpl_root, pin_root, circ_root):
         super().__init__()
@@ -27,7 +34,6 @@ class STMRegression(nn.Module):
         self.relu = nn.ReLU()  # 활성화 함수로 ReLU 사용
         self.dropout = nn.Dropout(0.2)  # 드롭아웃 레이어
 
-        self.use_smpl = False
         male_path = os.path.join(smpl_root, "SMPLX_MALE.pkl")
         female_path = os.path.join(smpl_root, "SMPLX_FEMALE.pkl")
         male = SMPL(path=male_path)
@@ -43,21 +49,22 @@ class STMRegression(nn.Module):
         self.taylor = Taylor(tape=get_interactions(), pin=(standing, sitting), circ_dict=circ_dict)
 
     def forward(self, x, gender):
-        x = self.bn1(self.fc1(x))
-        x = self.relu(x)
+        x = self.relu(self.fc1(x))
+        x = self.bn1(x)
         x = self.dropout(x)
 
-        x = self.bn2(self.fc2(x))
-        x = self.relu(x)
+        x = self.relu(self.fc2(x))
+        x = self.bn2(x)
         x = self.dropout(x)
 
-        x = self.bn3(self.fc3(x))
-        x = self.relu(x)
+        x = self.relu(self.fc3(x))
+        x = self.bn3(x)
         # x = self.dropout(x)
 
         result = self.fc4(x)
-        if self.use_smpl:
+        if self.training is False:
             result = self.do_taylor(shape=result, gender=gender)
+            result = result.to(x.device)
         return None, result
 
     def do_taylor(self, shape, gender):
@@ -78,11 +85,11 @@ class STMRegression(nn.Module):
                                               offset=offset)
             v = torch.zeros_like(male_v)
             v[female_indexes] = female_v[female_indexes]
-            v[male_indexes] = female_v[male_indexes]
+            v[male_indexes] = male_v[male_indexes]
 
             bodies[key] = copy.deepcopy(v)
         self.taylor.update(model_dict=bodies)
-        measure = self.taylor.order(gender=gender)
+        measure = self.taylor.order(gender=gender, visualize=True)
         table = measure / measure.max(dim=1).values.unsqueeze(1)
         return table
 
