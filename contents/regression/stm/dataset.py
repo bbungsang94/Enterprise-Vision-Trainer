@@ -29,13 +29,10 @@ class STMTrainSet(Dataset):
             pth = torch.load(os.path.join(dataset_root, file))
             genders.append(pth['input']['gender'])
             measure = torch.FloatTensor(pth['output']['measure'])
-            if pth['input']['gender'] == "male":
-                measure[5] = 0.0
-                measure[29] = 0.0
             label.append(pth['input']['shape'])
             x.append(measure)
 
-        self.x_data = torch.stack(x)
+        self.x_data = torch.concat(x)
         self.gender = genders
         self.y_data = torch.concat(label).to(torch.float32)
 
@@ -57,15 +54,12 @@ class STMEvalSet(Dataset):
             pth = torch.load(os.path.join(dataset_root, file))
             genders.append(pth['input']['gender'])
             measure = torch.FloatTensor(pth['output']['measure'])
-            if pth['input']['gender'] == "male":
-                measure[5] = 0.0
-                measure[29] = 0.0
             label.append(measure.detach())
             x.append(measure.detach())
 
-        self.x_data = torch.stack(x)
+        self.x_data = torch.concat(x)
         self.gender = genders
-        self.y_data = torch.stack(label)
+        self.y_data = torch.concat(label)
 
     def __len__(self):
         return len(self.x_data)

@@ -49,7 +49,7 @@ class Taylor:
                     args.append(self.model[pose][:, index])
                 args.insert(0, stub[-1])
                 func = stub[0]
-                      
+
             value = getattr(self, func)(*args)
             self.table[:, i] = value
 
@@ -90,7 +90,7 @@ class Taylor:
                         else:
                             line_colors.append([1., 0., 1.])
                         points.append(point)
-                        lines.append([i + count, ((i+1) % len(indexes)) + count])
+                        lines.append([i + count, ((i + 1) % len(indexes)) + count])
                     count += len(indexes)
 
                 pcd = o3d.geometry.PointCloud()

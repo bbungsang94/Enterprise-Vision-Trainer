@@ -89,7 +89,7 @@ class STMRegression(nn.Module):
 
             bodies[key] = copy.deepcopy(v)
         self.taylor.update(model_dict=bodies)
-        measure = self.taylor.order(gender=gender, visualize=True)
+        measure = self.taylor.order(gender=gender, visualize=False)
         table = measure / measure.max(dim=1).values.unsqueeze(1)
         return table
 
