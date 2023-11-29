@@ -14,8 +14,10 @@ class SingleGPURunner(Base):
         self.report_state()
 
         self._model.to(self.device)
-        self._loader.to(self.device)
-        self._evaluator.to(self.device)
+        if "to" in dir(self._loader):
+            self._loader.to(self.device)
+        if "to" in dir(self._evaluator):
+            self._evaluator.to(self.device)
 
     def report_state(self):
         self.device = summary_device()

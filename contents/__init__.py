@@ -4,6 +4,8 @@ from functools import partial
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
+from contents.autoencoder.dataset import FTMGraphset, FTMGraphLoader
+from contents.autoencoder.graph import GCNAutoencoder
 from contents.basic.autoencoder.dataset import GenLoader, Gen4xLoader
 from contents.basic.autoencoder.model import StaticAutoencdoer, Autoencdoer4x, DoubleEncoder
 from contents.basic.facial_landmark.dataset import LandmarkDataset
@@ -31,29 +33,58 @@ def get_model_fn(model, **kwargs) -> nn.Module:
     return model(**kwargs)
 
 
-REGISTRY = {'FLAEP_dataset': partial(get_dataset_fn, dataset=FLAEPDataset),
-            'FLAEPv2_dataset': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
-            'SkinDDPM_dataset': partial(get_dataset_fn, dataset=SkinDataset),
-            'Landmark_dataset': partial(get_dataset_fn, dataset=LandmarkDataset),
-            'STM_dataset': partial(get_dataset_fn, dataset=STMWrapper),
-            'FLAEP_loader': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
-            'FLAEPv2_loader': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
-            'SkinDDPM_loader': partial(get_dataloader_fn, dataloader=SkinDataLoader),
-            'DataLoader': partial(get_dataloader_fn, dataloader=DataLoader),
-            'ForGen_loader': partial(get_dataloader_fn, dataloader=GenLoader),
-            'ForGen4x_loader': partial(get_dataloader_fn, dataloader=Gen4xLoader),
-            'STM_loader': partial(get_dataloader_fn, dataloader=STMLoader),
-            'FLAEPmodel': partial(get_model_fn, model=BasicFLAEP),
-            'DiffusionFLAEP_model': partial(get_model_fn, model=ParamFLAEP),
-            'DDPM_model': partial(get_model_fn, model=Unet),
-            'SkinDDPM_model': partial(get_model_fn, model=SkinDiffusion),
-            'AutoEncoder4x_model': partial(get_model_fn, model=Autoencdoer4x),
-            'AutoEncoder_model': partial(get_model_fn, model=DoubleEncoder),
-            'Unet_model': partial(get_model_fn, model=ClassicUnet),
-            'Landmark_model': partial(get_model_fn, model=BasicLandmarker),
-            'STM_model': partial(get_model_fn, model=STMRegression),
-            'Diffusionloss': FakeLoss
-            }
+class Contents:
+    def __init__(self):
+        datasets = {
+            'FLAEP': partial(get_dataset_fn, dataset=FLAEPDataset),
+            'FLAEPv2': partial(get_dataset_fn, dataset=FLAEPNoPinDataset),
+            'SkinDDPM': partial(get_dataset_fn, dataset=SkinDataset),
+            'Landmark': partial(get_dataset_fn, dataset=LandmarkDataset),
+            'STM': partial(get_dataset_fn, dataset=STMWrapper),
+            'GraphFTM': partial(get_dataset_fn, dataset=FTMGraphset),
+        }
+        loaders = {
+            'FLAEP': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
+            'FLAEPv2': partial(get_dataloader_fn, dataloader=FLAEPNoPinLoader),
+            'SkinDDPM': partial(get_dataloader_fn, dataloader=SkinDataLoader),
+            'ForGen': partial(get_dataloader_fn, dataloader=GenLoader),
+            'ForGen4x': partial(get_dataloader_fn, dataloader=Gen4xLoader),
+            'STM': partial(get_dataloader_fn, dataloader=STMLoader),
+            'GraphLoader': partial(get_dataloader_fn, dataloader=FTMGraphLoader),
+        }
+        models = {
+            'FLAEP': partial(get_model_fn, model=BasicFLAEP),
+            'DiffusionFLAEP': partial(get_model_fn, model=ParamFLAEP),
+            'DDPM': partial(get_model_fn, model=Unet),
+            'SkinDDPM': partial(get_model_fn, model=SkinDiffusion),
+            'AutoEncoder4x': partial(get_model_fn, model=Autoencdoer4x),
+            'AutoEncoder': partial(get_model_fn, model=DoubleEncoder),
+            'Unet': partial(get_model_fn, model=ClassicUnet),
+            'Landmark': partial(get_model_fn, model=BasicLandmarker),
+            'STM': partial(get_model_fn, model=STMRegression),
+            'GCNAutoencoder': partial(get_model_fn, model=GCNAutoencoder),
+        }
+        losses = {
+            'Diffusion': FakeLoss
+        }
+        optimizers = {
+
+        }
+
+        self.motherboard = {
+            'dataset': datasets,
+            'loader': loaders,
+            'model': models,
+            'loss': losses,
+            'optimizer': optimizers
+        }
+
+    def __getitem__(self, key):
+        result = None
+        module = key.split('_')
+        if module[0] in self.motherboard[module[-1]]:
+            result = self.motherboard[module[-1]][module[0]]
+        return result
 
 
 class TorchBase(metaclass=ABCMeta):

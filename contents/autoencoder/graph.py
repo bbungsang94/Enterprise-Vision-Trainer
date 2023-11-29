@@ -5,9 +5,14 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 
 
-class GraphAutoencoder(nn.Module):
+class EdgeAutoencoder(nn.Module):
+    def __init__(self):
+        super(EdgeAutoencoder, self).__init__()
+        # in (b, 44, 3) to Z, Z to O (b, 44, 3)
+        self.
+class GCNAutoencoder(nn.Module):
     def __init__(self, input_dim, hidden_dim, embedding_dim):
-        super(GraphAutoencoder, self).__init__()
+        super(GCNAutoencoder, self).__init__()
 
         # Graph Encoder layers
         self.conv1 = GCNConv(input_dim, hidden_dim)
@@ -33,7 +38,7 @@ class GraphAutoencoder(nn.Module):
         # Decode
         reconstructed = self.decode(encoding, edge_index)
 
-        return reconstructed
+        return encoding, [reconstructed, encoding]
 
 
 class GNNAutoencoder(MessagePassing):

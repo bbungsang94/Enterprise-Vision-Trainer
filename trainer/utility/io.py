@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import torch.nn
 
-from contents import REGISTRY as MODULES
+from contents import Contents
 
 
 def read_json(full_path=''):
@@ -70,6 +70,7 @@ class ModuleLoader:
         self._root = root
         self.params = params
         self.params['task']['model_name'] = self.params['modules']['model']
+        self.module = Contents()
 
     def get_module(self, kind, base, **kwargs):
         key = self.params['modules'][kind]
@@ -94,10 +95,11 @@ class ModuleLoader:
     def get_safety_registry(self, kind, key, **kwargs):
         args = self.get_args(kind, key, **kwargs)
         key = key + '_' + kind
-        if key in MODULES:
-            return MODULES[key](**args), args
-        else:
-            return None, args
+        result = None
+        if self.module[key]:
+            result = self.module[key](**args)
+        return result, args
+
 
 
 class CSVWriter:

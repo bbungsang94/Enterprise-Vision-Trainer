@@ -10,7 +10,7 @@ from trainer.viewer import REGISTRY as VIEWER
 
 def get_loader(root='./trainer/config'):
     parameter = read_json(os.path.join(root, 'default.json'))
-    module_loader = ModuleLoader(root=root, params=read_json(os.path.join(root, parameter['address'])))
+    module_loader = ModuleLoader(root=root, params=read_json(os.path.join(root, 'contents', parameter['address'])))
     return module_loader
 
 
