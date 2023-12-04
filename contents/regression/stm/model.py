@@ -9,17 +9,21 @@ import torch.nn as nn
 
 from contents.regression.stm.convention import get_interactions
 from contents.regression.stm.pose import get_t, get_sitdown, get_curve, get_hands_on, get_standing
-from contents.regression.stm.taylor import Taylor
+from contents.utility.taylor import Taylor
 from contents.regression.stm.utilities import rodrigues, with_zeros, pack
 
 
 def note():
-    #GNN으로 갈 필요가 있다.
-    #다만 Regression model 일부를 수정해야함
-    #ReLU를 사용하다보니 Batch norm을 ReLU뒤로 옮겨봤다
+    # GNN으로 갈 필요가 있다.
+    # 다만 Regression model 일부를 수정해야함
+    # ReLU를 사용하다보니 Batch norm을 ReLU뒤로 옮겨봤다
     pass
 
 
+# Image가 들어오면, Facial landmark쓸 수 있고, 수치 예측 모델까지 돌림
+# SizeKorea 수치있음, Landmark 있음
+# 인체치수를 측정하면? 근데 그 인체치수의 범위가 얼마여야하는가..
+#
 class STMRegression(nn.Module):
     def __init__(self, input_dim, output_dim, smpl_root, pin_root, circ_root):
         super().__init__()

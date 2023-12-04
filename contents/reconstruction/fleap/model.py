@@ -5,8 +5,8 @@ import timm
 import torch.nn as nn
 from torch import linalg
 from torch_geometric.nn import GCNConv, Sequential
-from contents.reconstruction.threeDMM.flame import get_parser, FLAME
 from contents.reconstruction.pinning.pins.pin import PinLoader
+from external.flame.flame import FLAMESet
 
 
 class ParamFLAEP:
@@ -258,34 +258,6 @@ class FLAEPLinearHead(nn.Module):
         x = nn.functional.adaptive_avg_pool2d(x, output_size=32)
         x = x.view(b, -1)
         return self.model(x)
-
-
-class FLAMESet(nn.Module):
-    def __init__(self, batch_size, **kwargs):
-        super().__init__()
-        gen_args = get_parser()
-        for key, value in kwargs.items():
-            if "path" in key:
-                kwargs[key] = os.path.join(kwargs['root'], value)
-            setattr(gen_args, key, kwargs[key])
-        gen_args.batch_size = batch_size
-        self.batch_size = batch_size
-        gen_args.flame_model_path = gen_args.flame_model_path.replace('generic', 'male')
-        male = FLAME(config=gen_args)
-        gen_args.flame_model_path = gen_args.flame_model_path.replace('male', 'female')
-        female = FLAME(config=gen_args)
-        self.model = nn.ModuleDict({'male': male, 'female': female})
-        self.faces = male.faces
-
-    def forward(self, genders, **kwargs):
-        vertices, landmarks = self.model['male'](**kwargs)
-        female_vertices, female_landmarks = self.model['female'](**kwargs)
-
-        for i, sex in enumerate(genders):
-            if sex == "female":
-                vertices[i] = female_vertices[i]
-                landmarks[i] = female_landmarks[i]
-        return vertices, landmarks
 
 
 class PinLossCalculator:

@@ -5,11 +5,6 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 
 
-class EdgeAutoencoder(nn.Module):
-    def __init__(self):
-        super(EdgeAutoencoder, self).__init__()
-        # in (b, 44, 3) to Z, Z to O (b, 44, 3)
-        self.
 class GCNAutoencoder(nn.Module):
     def __init__(self, input_dim, hidden_dim, embedding_dim):
         super(GCNAutoencoder, self).__init__()

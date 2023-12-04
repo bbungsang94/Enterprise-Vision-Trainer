@@ -17,6 +17,8 @@ from contents.generative_model.ddpm.model import Unet
 from contents.generative_model.skinpatch.dataset import SkinDataset, SkinDataLoader
 from contents.generative_model.skinpatch.model import SkinDiffusion
 from contents.generative_model.skinpatch.loss import FakeLoss
+from contents.regression.ftm.dataset import FTMDataset, FTMLoader
+from contents.regression.ftm.model import FTMRegression
 from contents.regression.stm.model import STMRegression
 from contents.regression.stm.dataset import STMWrapper, STMLoader
 
@@ -42,6 +44,7 @@ class Contents:
             'Landmark': partial(get_dataset_fn, dataset=LandmarkDataset),
             'STM': partial(get_dataset_fn, dataset=STMWrapper),
             'GraphFTM': partial(get_dataset_fn, dataset=FTMGraphset),
+            'FTM': partial(get_dataset_fn, dataset=FTMDataset),
         }
         loaders = {
             'FLAEP': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
@@ -51,6 +54,7 @@ class Contents:
             'ForGen4x': partial(get_dataloader_fn, dataloader=Gen4xLoader),
             'STM': partial(get_dataloader_fn, dataloader=STMLoader),
             'GraphLoader': partial(get_dataloader_fn, dataloader=FTMGraphLoader),
+            'FTM': partial(get_dataloader_fn, dataloader=FTMLoader)
         }
         models = {
             'FLAEP': partial(get_model_fn, model=BasicFLAEP),
@@ -63,6 +67,7 @@ class Contents:
             'Landmark': partial(get_model_fn, model=BasicLandmarker),
             'STM': partial(get_model_fn, model=STMRegression),
             'GCNAutoencoder': partial(get_model_fn, model=GCNAutoencoder),
+            'FTM': partial(get_model_fn, model=FTMRegression),
         }
         losses = {
             'Diffusion': FakeLoss

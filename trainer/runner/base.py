@@ -191,7 +191,8 @@ class Base(metaclass=ABCMeta):
             self._optimizer.step()
 
             running_loss += loss.item()
-            line = "avg_loss: %.4f, ticks: %06d" % (running_loss / (i + 1), i)
+            avg_loss = running_loss / (i + 1)
+            line = "avg_loss: %.4f, ticks: %06d" % (avg_loss, i)
             progress.set_description(line)
 
             if i % self._params['task']['log_interval'] == self._params['task']['log_interval'] - 1:
@@ -214,6 +215,7 @@ class Base(metaclass=ABCMeta):
     def _run_eval_epoch(self, index, progress):
         self._model.eval()
         running_loss = 0.
+        avg_loss = 0.
         with torch.no_grad():
             for i, data in enumerate(progress):
                 inputs, labels = data
@@ -227,7 +229,8 @@ class Base(metaclass=ABCMeta):
                 else:
                     loss = self._metric(outputs, labels)
                 running_loss += loss.item()
-                line = "evaluation loss: %.4f, ticks: %06d" % (running_loss / (i + 1), i)
+                avg_loss = running_loss / (i + 1)
+                line = "evaluation loss: %.4f, ticks: %06d" % (avg_loss, i)
                 progress.set_description(line)
 
-            return running_loss / i
+            return avg_loss
