@@ -709,3 +709,4 @@ def get_circ_coordinates():
         ]
     }
     return dictionary
+

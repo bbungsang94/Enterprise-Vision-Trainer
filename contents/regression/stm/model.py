@@ -9,7 +9,7 @@ import torch.nn as nn
 
 from contents.regression.stm.convention import get_interactions
 from contents.regression.stm.pose import get_t, get_sitdown, get_curve, get_hands_on, get_standing
-from contents.utility.taylor import Taylor
+from contents.utility.tailor import Tailor
 from contents.regression.stm.utilities import rodrigues, with_zeros, pack
 
 
@@ -50,7 +50,7 @@ class STMRegression(nn.Module):
             sitting = json.load(f)
         with open(os.path.join(circ_root, 'circumference.json'), 'r', encoding='UTF-8-sig') as f:
             circ_dict = json.load(f)
-        self.taylor = Taylor(tape=get_interactions(), pin=(standing, sitting), circ_dict=circ_dict)
+        self.taylor = Tailor(tape=get_interactions(), pin=(standing, sitting), circ_dict=circ_dict)
 
     def forward(self, x, gender):
         x = self.relu(self.fc1(x))

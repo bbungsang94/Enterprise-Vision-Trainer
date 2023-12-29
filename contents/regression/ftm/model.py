@@ -9,14 +9,13 @@ from torch_geometric.nn import GATConv
 
 from contents.regression.ftm.convention import get_interactions
 from contents.utility.io_utils import ModelPath
-from contents.utility.taylor import GraphTaylor
+from contents.utility.tailor import GraphTailor
 from external.flame.flame import FLAMESet
 from modules.layer import MultiHeadGATLayer
 
 
 class FTMRegression(nn.Module):
-    def __init__(self, node_dim, edge_dim, n_of_node, shape_dim, flame_root,
-                 encoder_path, pin_root, circ_root, num_heads=5):
+    def __init__(self, node_dim, edge_dim, n_of_node, shape_dim, num_heads=5):
         super().__init__()
         self.encoder = MultiHeadGATLayer(in_dim=node_dim, out_dim=16, edge_dim=edge_dim, num_heads=num_heads)
         # encoder_dict = torch.load(encoder_path)
@@ -29,7 +28,6 @@ class FTMRegression(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(encoded_len + int(encoded_len * 0.3), 512),
-            nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Linear(512, 256),
             nn.ReLU()
@@ -37,7 +35,6 @@ class FTMRegression(nn.Module):
 
         self.edge_regressor = nn.Sequential(
             nn.Linear((44 * edge_dim), 512),
-            nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(512, 256),

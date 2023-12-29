@@ -6,7 +6,7 @@ import torch
 from torch_geometric.data import Data, Batch
 
 
-class Taylor:
+class Tailor:
     def __init__(self, tape, pin, circ_dict, model_dict=None):
         """
         :param tape: It's interaction list from convention.py. call get_interactions
@@ -189,7 +189,7 @@ class Taylor:
         return result
 
 
-class GraphTaylor(Taylor):
+class GraphTailor(Tailor):
     def __init__(self, tape, pin, circ_dict):
         super().__init__(tape, pin, circ_dict)
         named_nodes = {}
