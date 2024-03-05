@@ -1,5 +1,6 @@
 {
-    "name": "CelebA",
-    "root": "./data/CelebA",
-    "download": true
+    "root": "D:\\Creadto\\Heritage\\Dataset\\CelebA\\archive\\img_align_celeba\\img_align_celeba",
+    "pre_load": true,
+    "same_output": true,
+    "resize": null
 }

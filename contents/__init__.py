@@ -11,6 +11,9 @@ from contents.basic.autoencoder.model import StaticAutoencdoer, Autoencdoer4x, D
 from contents.basic.facial_landmark.dataset import LandmarkDataset
 from contents.basic.facial_landmark.model import BasicLandmarker
 from contents.basic.unet.model import ClassicUnet
+from contents.basic.vae.dataset import ImageDataset, CelebALoader, ImageAgeDataset
+from contents.basic.vae.loss import VAELoss
+from contents.basic.vae.model import CelebAVAE, GenderAgeAE
 from contents.reconstruction.fleap.dataset import FLAEPDataset, FLAEPDataLoader, FLAEPNoPinDataset, FLAEPNoPinLoader
 from contents.reconstruction.fleap.model import BasicFLAEP, ParamFLAEP
 from contents.generative_model.ddpm.model import Unet
@@ -45,6 +48,8 @@ class Contents:
             'STM': partial(get_dataset_fn, dataset=STMWrapper),
             'GraphFTM': partial(get_dataset_fn, dataset=FTMGraphset),
             'FTM': partial(get_dataset_fn, dataset=FTMDataset),
+            'CelebA': partial(get_dataset_fn, dataset=ImageDataset),
+            'CelebAAge': partial(get_dataset_fn, dataset=ImageAgeDataset),
         }
         loaders = {
             'FLAEP': partial(get_dataloader_fn, dataloader=FLAEPDataLoader),
@@ -54,7 +59,8 @@ class Contents:
             'ForGen4x': partial(get_dataloader_fn, dataloader=Gen4xLoader),
             'STM': partial(get_dataloader_fn, dataloader=STMLoader),
             'GraphLoader': partial(get_dataloader_fn, dataloader=FTMGraphLoader),
-            'FTM': partial(get_dataloader_fn, dataloader=FTMLoader)
+            'FTM': partial(get_dataloader_fn, dataloader=FTMLoader),
+            'CelebA': partial(get_dataloader_fn, dataloader=CelebALoader),
         }
         models = {
             'FLAEP': partial(get_model_fn, model=BasicFLAEP),
@@ -68,9 +74,12 @@ class Contents:
             'STM': partial(get_model_fn, model=STMRegression),
             'GCNAutoencoder': partial(get_model_fn, model=GCNAutoencoder),
             'FTM': partial(get_model_fn, model=FTMRegression),
+            'VanillaVAE': partial(get_model_fn, model=CelebAVAE),
+            'GenderAgeAE': partial(get_model_fn, model=GenderAgeAE),
         }
         losses = {
-            'Diffusion': FakeLoss
+            'Diffusion': FakeLoss,
+            'VAELoss': VAELoss,
         }
         optimizers = {
 

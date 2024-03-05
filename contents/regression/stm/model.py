@@ -144,8 +144,7 @@ class SMPL:
         lrotmin = (r_cube - i_cube).reshape(batch_num, -1, 1).squeeze(dim=2)
         v_posed = v_shaped + torch.tensordot(lrotmin, self.posedirs, dims=([1], [2]))
 
-        results = []
-        results.append(with_zeros(torch.cat((r_cube_big[:, 0], torch.reshape(joint[:, 0, :], (-1, 3, 1))), dim=2)))
+        results = [with_zeros(torch.cat((r_cube_big[:, 0], torch.reshape(joint[:, 0, :], (-1, 3, 1))), dim=2))]
         for i in range(1, self.kintree_table.shape[1]):
             results.append(torch.matmul(results[parent[i]], with_zeros(
                 torch.cat((r_cube_big[:, i], torch.reshape(joint[:, i, :] - joint[:, parent[i], :], (-1, 3, 1))),

@@ -5,7 +5,7 @@ import torch
 def get_t(batch_size):
     p = np.zeros((batch_size, 55, 3))
 
-    return torch.from_numpy(p.reshape((batch_size, -1)))
+    return torch.from_numpy(p.reshape((batch_size, 55, 3)))
 
 
 def get_hands_on(batch_size):
@@ -21,7 +21,7 @@ def get_hands_on(batch_size):
     p[:, 20, 0] = -1.0
     p[:, 21, 0] = -1.0
 
-    return torch.from_numpy(p.reshape((batch_size, -1)))
+    return torch.from_numpy(p.reshape((batch_size, 55, 3)))
 
 
 def get_standing(batch_size):
@@ -33,7 +33,7 @@ def get_standing(batch_size):
     p[:, 14, 2] = 0.4
     p[:, 16, 2] = -1.0
     p[:, 17, 2] = 1.0
-    return torch.from_numpy(p.reshape((batch_size, -1)))
+    return torch.from_numpy(p.reshape((batch_size, 55, 3)))
 
 
 def get_curve(batch_size):
@@ -50,7 +50,7 @@ def get_curve(batch_size):
 
     p[:, 18, 1] = -1.5
     p[:, 19, 1] = 1.5
-    return torch.from_numpy(p.reshape((batch_size, -1)))
+    return torch.from_numpy(p.reshape((batch_size, 55, 3)))
 
 
 def get_sitdown(batch_size):
@@ -67,4 +67,4 @@ def get_sitdown(batch_size):
 
     p[:, 18, 1] = -1.5
     p[:, 19, 1] = 1.5
-    return torch.from_numpy(p.reshape((batch_size, -1)))
+    return torch.from_numpy(p.reshape((batch_size, 55, 3)))

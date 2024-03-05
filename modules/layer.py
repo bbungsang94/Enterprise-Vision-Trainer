@@ -1,6 +1,7 @@
 from typing import Dict, Any
 
 import torch
+import torch_geometric
 from torch import nn, Tensor
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange
@@ -8,6 +9,8 @@ from torch_geometric.nn import GATConv
 
 from modules.blocks import DoubleConv
 from modules.utils import default
+
+from torchvision.models.efficientnet import EfficientNet
 
 
 # small helper modules

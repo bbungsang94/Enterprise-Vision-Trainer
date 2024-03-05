@@ -201,10 +201,10 @@ class Base(metaclass=ABCMeta):
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
 
-                viewer_kwargs = {'inputs': inputs,
+                viewer_kwargs = {'inputs': inputs[0],
                                  'labels': labels,
                                  'latent': latent,
-                                 'outputs': outputs}
+                                 'outputs': outputs[0]}
                 self._viewer.save(images=viewer_kwargs, save_path=save_path)
                 avg_loss = running_loss / i  # loss per batch
                 self._write_log(epoch=index, tick=i, loss=avg_loss, mode=mode)
