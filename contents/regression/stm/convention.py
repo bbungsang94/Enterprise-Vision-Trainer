@@ -37,10 +37,12 @@ def get_coordinates():
         [-0.14755, 0.116413, 0.098559],  # 겨드랑뒤벽점(PosterioridAxilla, 우)
         [0.147547, 0.116415, 0.098557],  # 겨드랑뒤벽점(PosterioridAxilla, 좌)
         [0.000003, 0.124056, 0.064129],  # 등뼈위겨드랑수준점(Axillary Level atidspine)
-        [-0.199998, -0.030044, 0.035669],  # 겨드랑앞접힘점(Anterior Axillary Fold, 우)
-        [0.199999, -0.030045, 0.035673],  # 겨드랑앞접힘점(Anterior Axillary Fold, 좌)
-        [-0.222151, 0.082484, -0.004028],  # 겨드랑뒤접힘점(Posterior Axilla Fold, 우)
-        [0.222146, 0.082482, -0.004028],  # 겨드랑뒤접힘점(Posterior Axilla Fold, 좌)
+        [-0.169969, -0.047948, 0.049562],  # 겨드랑앞접힘점(Anterior Axillary Fold, 우)
+        [0.169975, -0.047948, 0.049568],  # 겨드랑앞접힘점(Anterior Axillary Fold, 좌)
+        [-0.169865, 0.117712, 0.051067],  # 겨드랑뒤접힘점(Posterior Axillary Fold, 우)
+        [0.169862, 0.117711, 0.051066],  # 겨드랑뒤접힘점(Posterior Axillary Fold, 좌)
+        [-0.088033, -0.091923, 0.016145], # 가슴 앞점(Anterior Chest Point, 우)
+        [-0.099443, 0.144744, 0.013185], # 가슴 뒤점(Posterior Chest Point, 우)
         [0.000004, -0.078771, 0.032336],  # 복장뼈가운데점(Mesosternal)
         [-0.107037, -0.105581, -0.050393],  # 젖꼭지점(Nipple, 우)
         [0.107042, -0.105592, -0.050393],  # 젖꼭지점(Nipple, 좌)
@@ -98,6 +100,8 @@ def get_coordinates():
         [0.128206, 0.082131, -1.31363],  # 가쪽복사점(Medialalleous, 좌)
         [-0.794376, 0.067816, 0.022871],  # 손바닥중앙점(Hand center, 우)
         [0.794374, 0.067817, 0.022872],  # 손바닥중앙점(Hand center, 좌)
+        [-0.924184, 0.081338, 0.034942],  # 손끝점(Hand end, 우)
+        [0.924185, 0.081336, 0.034939],  # 손끝점(Hand end, 좌)
         [-0.113462, -0.021057, -1.38951],  # 발바닥중앙점(Foot center, 우)
         [0.113457, -0.021056, -1.38951],  # 발바닥중앙점(Foot center, 좌)
         [-0.464522, 0.097318, 0.057199],  # 팔꿈치아래점(Bottom olecranon, 우)
@@ -169,8 +173,10 @@ def get_names():
         "등뼈위겨드랑수준점, Axillary Level atidspine": -1,
         "겨드랑앞접힘점, Anterior Axillary Fold, 우": -1,
         "겨드랑앞접힘점, Anterior Axillary Fold, 좌": -1,
-        "겨드랑뒤접힘점, Posterior Axilla Fold, 우": -1,
-        "겨드랑뒤접힘점, Posterior Axilla Fold, 좌": -1,
+        "겨드랑뒤접힘점, Posterior Axillary Fold, 우": -1,
+        "겨드랑뒤접힘점, Posterior Axillary Fold, 좌": -1,
+        "가슴 앞점, Anterior Chest Point, 우": -1,
+        "가슴 뒤점, Posterior Chest Point, 우": -1,
         "복장뼈가운데점, Mesosternal": -1,
         "젖꼭지점, Nipple, 우": -1,
         "젖꼭지점, Nipple, 좌": -1,
@@ -228,6 +234,8 @@ def get_names():
         "가쪽복사점, Medialalleous, 좌": -1,
         "손바닥중앙점, Hand center, 우": -1,
         "손바닥중앙점, Hand center, 좌": -1,
+        "손끝점, Hand end, 우": -1,
+        "손끝점, Hand end, 좌": -1,
         "발바닥중앙점, Foot center, 우": -1,
         "발바닥중앙점, Foot center, 좌": -1,
         "팔꿈치아래점, Bottom olecranon, 우": -1,
@@ -262,28 +270,28 @@ def get_names():
 def get_interactions():
     interactions = [
         ("머리위로뻗은주먹높이", "Overhead Fist Reach", ["Foot center, 우", "Hand center, 우"], "height", "hands-on"),
-        ("키", "Stature", ["Foot center, 우", "Occipital bone"], "height", "standing"),
-        ("목뒤높이", "Cervical Height", ["Foot center, 우", "Cervicale"], "height", "standing"),
-        ("어깨높이", "Acromion Height", ["Foot center, 우", "Acromion, 우"], "height", "standing"),
-        ("겨드랑높이", "Axilla Height", ["Foot center, 우", "Axilla, 우"], "height", "standing"),
+        ("키", "Stature", ["Foot center, 우", "Occipital bone"], "height", "t"),
+        ("목뒤높이", "Cervical Height", ["Foot center, 우", "Cervicale"], "height", "t"),
+        ("어깨높이", "Acromion Height", ["Foot center, 우", "Acromion, 우"], "height", "t"),
+        ("겨드랑높이", "Axilla Height", ["Foot center, 우", "Axilla, 우"], "height", "t"),
         ("허리기준선높이", "Waist Height natural indentation", ["Foot center, 우", "Lateral Waist level, 우"], "height",
-         "standing"),
-        ("허리높이", "Waist Height", ["Foot center, 우", "Lateral Waist, 우"], "height", "standing"),
-        ("위앞엉덩뼈가시높이", "Iliac Spine Height", ["Foot center, 우", "Top-hip, 우"], "height", "standing"),
-        ("샅높이", "Crotch Height", ["Foot center, 우", "Crotch"], "height", "standing"),
-        ("가쪽복사높이", "Lateralalleolus Height", ["Foot center, 우", "Lateralalleous, 우"], "height", "standing"),
+         "t"),
+        ("허리높이", "Waist Height", ["Foot center, 우", "Lateral Waist, 우"], "height", "t"),
+        ("위앞엉덩뼈가시높이", "Iliac Spine Height", ["Foot center, 우", "Top-hip, 우"], "height", "t"),
+        ("샅높이", "Crotch Height", ["Foot center, 우", "Crotch"], "height", "t"),
+        ("가쪽복사높이", "Lateralalleolus Height", ["Foot center, 우", "Lateralalleous, 우"], "height", "t"),
         ("주먹높이", "Fist Height", ["Foot center, 우", "Hand center, 우"], "height", "standing"),
         ("팔꿈치높이", "Elbow Height", ["Foot center, 우", "Bottom olecranon, 우"], "height", "curve"),
         ("가슴너비", "Chest Breadth", ["Axilla, 좌", "Axilla, 우"], "width", "standing"),
         ("허리너비", "Waist Breadth", ["Lateral Waist, 좌", "Lateral Waist, 우"], "width", "standing"),
         ("엉덩이너비", "Hip Width", ["Buttock Protrusion level, 좌", "Buttock Protrusion level, 우"], "width", "standing"),
         ("발목너비", "Ankle Width", ["Inner Ankle, 우", "Outer Ankle, 우"], "width", "standing"),
-        ("겨드랑두께", "Armscye Depth", ["Posterior Axilla, 우", "Anterior Axilla, 우"], "depth", "t"),
-        ("가슴두께", "Chest Depth, Standing", ["AnterioridAxilla, 우", "PosterioridAxilla, 우"], "depth", "t"),
+        ("겨드랑두께", "Armscye Depth", ["Posterior Axillary Fold, 우", "Anterior Axillary Fold, 우"], "depth", "t"),
+        ("가슴두께", "Chest Depth, Standing", ["Anterior Chest Point, 우", "Posterior Chest Point, 우"], "depth", "t"),
         ("허리두께", "Waist Depth", ["Anterior Waist", "Posterior Waist"], "depth", "t"),
         ("목둘레", "Neck Circumference", ["Inferior Thyroid", "Inferior Thyroid"], "circ-h", "standing"),
-        ("목밑뒤길이", "Back Neck Base Length", ["Lateral Neck, 좌", "Lateral Neck, 우"], "length", "standing"),
-        ("목밑둘레", "Neck Base Circumference", ["Lateral Neck, 좌", "Lateral Neck, 좌"], "circ-n", "standing"),
+        ("목밑뒤길이", "Back Neck Base Length", ["Lateral Neck, 좌", "Lateral Neck, 우"], "length-h", "standing"),
+        ("목밑둘레", "Neck Base Circumference", ["Lateral Neck, 좌", "Lateral Neck, 좌"], "circ-h", "standing"),
         ("겨드랑둘레", "Armscye Circumference", ["Acromion, 우", "Acromion, 우"], "circ-v", "standing"),
         ("편위팔둘레", "Upper Arm Circumference", ["Lateral Shoulder, 우", "Lateral Shoulder, 우"], "circ-v", "t"),
         ("편팔꿈치둘레", "Elbow Circumference", ["Bottom olecranon, 우", "Bottom olecranon, 우"], "circ-v", "t"),
@@ -298,20 +306,21 @@ def get_interactions():
         ("넙다리둘레", "Thigh Circumference", ["Midthigh, 우"], "circ-h", "hands-on"),
         ("무릎둘레", "Knee Circumference", ["Midpatella, 우"], "circ-h", "hands-on"),
         ("종아리둘레", "Calf Circumference", ["Calf Protrusion, 우"], "circ-h", "hands-on"),
-        ("목옆뒤허리둘레선길이", "Neck Point to back Waistline", ["Lateral Neck, 우", "Lateral Waist level, 우"], "length", "t"),
+        ("목옆뒤허리둘레선길이", "Neck Point to back Waistline", ["Lateral Neck, 우", "Lateral Waist level, 우"], "length-v", "t"),
         ("목옆젖꼭지길이", "Neck Shoulder Point to Nipple", ["Lateral Neck, 우", "Nipple, 우"], "length", "t"),
         ("목옆젖꼭지허리둘레선길이", "Neck Point to Breast Point to Waistline",
          ["Lateral Neck, 우", "Lateral Waist level, 우"], "length", "t"),
-        ("샅앞뒤길이", "Crotch length", ["Anterior Waist", "Posterior Waist"], "length", "t"),
+        ("샅앞뒤길이", "Crotch length", ["Anterior Waist", "Posterior Waist"], "length-v", "t"),
         ("어깨목뒤길이", "Shoulder to neck(half)", ["Cervicale", "Acromion, 좌"], "length", "standing"),
         ("목뒤어깨사이길이", "Shoulder to neck(full)", ["Acromion, 우", "Acromion, 좌"], "length", "standing"),
-        ("위팔길이", "Upperarm Length", ["Acromion, 우", "Bottom olecranon, 우"], "width", "t"),
-        ("팔길이", "Arm Length", ["Acromion, 우", "Ulnar Styloid, 우"], "width", "t"),
+        ("위팔길이", "Upperarm Length", ["Acromion, 우", "Bottom olecranon, 우"], "length", "standing"),
+        ("팔길이", "Arm Length", ["Acromion, 우", "Ulnar Styloid, 우"], "length", "standing"),
         ("앉은키", "Sitting Height", ["Occipital bone", "Gluteal Fold, 우"], "height", "sitting"),
         ("앉은배두께", "Sitting Height", ["Stomach tip", "Posterior Waist"], "depth", "sitting"),
-        ("팔꿈치주먹수평길이", "Elbow-Grip Length", ["Hand center, 우", "Bottom olecranon, 우"], "depth", "sitting"),
+        ("팔꿈치주먹수평길이", "Elbow-Grip Length", ["Hand end, 우", "Bottom olecranon, 우"], "depth", "sitting"),
     ]
     return interactions
+
 
 
 def get_circ_coordinates():
@@ -343,7 +352,6 @@ def get_circ_coordinates():
         ],
         'Back Neck Base Length':
         [
-            [0.060985, 0.007459, 0.180173],  # 목옆점(Lateral Neck, 좌)
             [0.059636, 0.041961, 0.189892],
             [0.057682, 0.063611, 0.184808],
             [0.02894, 0.081722, 0.179299],
@@ -353,7 +361,6 @@ def get_circ_coordinates():
             [-0.058419, 0.074248, 0.17654],
             [-0.065619, 0.049289, 0.182539],
             [-0.067154, 0.032751, 0.17677],
-            [-0.060985, 0.007459, 0.180173],  # 목옆점(Lateral Neck, 우)
         ],
         'Neck Base Circumference':
         [
@@ -717,6 +724,153 @@ def get_circ_coordinates():
             [-0.161514, 0.083405, -1.0312],
             [-0.14879, 0.104362, -1.02827],
             [-0.129508, 0.117681, -1.02742],
+        ],
+        'Neck Shoulder Point to Nipple':
+        [
+            [-0.060985, 0.007459, 0.180173], # 목옆점(Lateral Neck, 우)
+            [-0.065133, 0.005397, 0.157458],
+            [-0.066291, -0.010171, 0.13238],
+            [-0.077715, -0.029486, 0.112609],
+            [-0.096513, -0.061401, 0.065524],
+            [-0.104261, -0.08786, 0.016091],
+            [-0.11242, -0.097737, -0.016544],
+            [-0.107037, -0.105581, -0.050393],  # 젖꼭지점(Nipple, 우)
+        ],
+        'Neck Point to Breast Point to Waistline':
+        [
+            [-0.060985, 0.007459, 0.180173], # 목옆점(Lateral Neck, 우)
+            [-0.065133, 0.005397, 0.157458],
+            [-0.066291, -0.010171, 0.13238],
+            [-0.077715, -0.029486, 0.112609],
+            [-0.096513, -0.061401, 0.065524],
+            [-0.104261, -0.08786, 0.016091],
+            [-0.11242, -0.097737, -0.016544],
+            [-0.107037, -0.105581, -0.050393],  # 젖꼭지점(Nipple, 우)
+            [-0.112523, -0.095326, -0.068757],
+            [-0.10896, -0.090801, -0.084813],
+            [-0.109421, -0.088229, -0.101162],
+            [-0.111288, -0.086797, -0.119902],
+            [-0.11158, -0.086915, -0.139723],
+            [-0.110168, -0.086989, -0.161697],
+            [-0.107954, -0.08713, -0.185196],
+            [-0.105121, -0.087478, -0.208625],
+            [-0.103086, -0.08843, -0.231183], # 허리둘레선
+        ],
+        'Crotch length':
+        [
+            [0.000004, -0.132918, -0.233358], # 허리앞점, Anterior Waist
+            [0.000002, -0.131549, -0.256985],
+            [0.000001, -0.128414, -0.321224],
+            [0.000001, -0.124627, -0.340504],
+            [0.000001, -0.121175, -0.361381],
+            [0, -0.117873, -0.384597],
+            [0, -0.115115, -0.410936],
+            [0.000001, -0.114133, -0.437942],
+            [0.000001, -0.115851, -0.463587],
+            [0.000001, -0.116409, -0.485708],
+            [0, -0.09466, -0.534004],
+            [-0.000001, -0.079583, -0.545807],
+            [-0.000001, -0.054037, -0.556426],
+            [-0.000001, -0.033277, -0.555264],
+            [-0.000001, 0.057764, -0.53414],
+            [0, 0.069433, -0.527177],
+            [0, 0.085287, -0.523861],
+            [0, 0.099813, -0.514564],                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+            [0.000001, 0.114696, -0.502331],
+            [0.000001, 0.127017, -0.490409],
+            [0.000001, 0.136304, -0.478504],
+            [0.000001, 0.144395, -0.462326],
+            [0.000001, 0.149724, -0.441748],
+            [0.000001, 0.151312, -0.417692],
+            [0, 0.147769, -0.393077],
+            [-0, 0.140877, -0.368823],
+            [-0.000001, 0.130915, -0.346144],
+            [-0.000001, 0.120279, -0.324361],
+            [-0.000002, 0.109145, -0.307709],
+            [-0.000003, 0.100244, -0.289525],
+            [-0.000003, 0.094612, -0.264631],                                                
+            [-0.000003, 0.091046, -0.236951] # 허리뒤점(Posterior Waist)
+        ],
+        'Shoulder to neck(half)':
+        [
+            [0.000004, 0.097569, 0.157897],
+            [0.179892, 0.024178, 0.151493]
+        ],
+        'Shoulder to neck(full)':
+        [
+            [-0.179889, 0.024175, 0.151491],
+            [0.000004, 0.097569, 0.157897],
+            [0.179892, 0.024178, 0.151493]
+        ],
+        'Neck Point to back Waistline':
+        [
+            [-0.028934, 0.081723, 0.179298], # 목 옆점을 따르는 뒷 목선
+            [-0.030588, 0.089513, 0.167989],
+            [-0.021055, 0.0961, 0.159939],
+            [-0.021789, 0.103036, 0.147349],
+            [-0.018636, 0.109122, 0.133078],
+            [-0.036789, 0.116919, 0.125137],
+            [-0.036361, 0.121482, 0.113554],
+            [-0.036932, 0.125878, 0.100535],
+            [-0.037294, 0.133255, 0.070931],
+            [-0.036142, 0.138547, 0.03851],
+            [-0.03513, 0.140983, 0.003902],
+            [-0.041287, 0.141591, -0.035859],
+            [-0.043273, 0.135725, -0.083395],
+            [-0.041928, 0.130525, -0.109293],
+            [-0.040791, 0.123991, -0.136105],
+            [-0.040068, 0.11695, -0.162941],
+            [-0.039762, 0.109515, -0.189014],
+            [-0.040863, 0.103425, -0.214084],
+            [-0.043252, 0.099316, -0.239186], # 허리뒤점(Posterior Waist)을 따르는 뒷 허리선
+        ],
+        'Upperarm Length':
+        [
+            [-0.179889, 0.024175, 0.151491],  # 어깨점(Acromion, 우)
+            [-0.200763, 0.016854, 0.141978],
+            [-0.212149, 0.01492, 0.135198],
+            [-0.225209, 0.01429, 0.128703],
+            [-0.23936, 0.014887, 0.122304],
+            [-0.255001, 0.017607, 0.115888],
+            [-0.273096, 0.021429, 0.10866],
+            [-0.293038, 0.025564, 0.10069],
+            [-0.315484, 0.028445, 0.094789],
+            [-0.339521, 0.030077, 0.091506],
+            [-0.363657, 0.029947, 0.088477],
+            [-0.388458, 0.029597, 0.086043],
+            [-0.411837, 0.02909, 0.083624],
+            [-0.426136, 0.027491, 0.08246],
+            [-0.439119, 0.026625, 0.081356],
+            [-0.453985, 0.02545, 0.079619], # 노뼈위점(임시)
+        ],
+        'Arm Length':
+        [
+            [-0.179889, 0.024175, 0.151491],  # 어깨점(Acromion, 우)
+            [-0.200763, 0.016854, 0.141978],
+            [-0.212149, 0.01492, 0.135198],
+            [-0.225209, 0.01429, 0.128703],
+            [-0.23936, 0.014887, 0.122304],
+            [-0.255001, 0.017607, 0.115888],
+            [-0.273096, 0.021429, 0.10866],
+            [-0.293038, 0.025564, 0.10069],
+            [-0.315484, 0.028445, 0.094789],
+            [-0.339521, 0.030077, 0.091506],
+            [-0.363657, 0.029947, 0.088477],
+            [-0.388458, 0.029597, 0.086043],
+            [-0.411837, 0.02909, 0.083624],
+            [-0.426136, 0.027491, 0.08246],
+            [-0.439119, 0.026625, 0.081356],
+            [-0.453985, 0.02545, 0.079619], # 노뼈위점(임시)
+            [-0.472317, 0.024282, 0.077405],
+            [-0.492438, 0.024068, 0.074666],
+            [-0.515923, 0.024973, 0.070341],
+            [-0.538699, 0.027163, 0.065354],
+            [-0.560262, 0.029001, 0.060955],
+            [-0.581391, 0.031177, 0.056749],
+            [-0.621444, 0.038787, 0.061274],
+            [-0.662263, 0.041438, 0.064966],
+            [-0.704352, 0.046063, 0.066119],
+            [-0.721154, 0.043447, 0.06338], # 손목안쪽점 라인(임시)(Ulnar Styloid, 우)
         ]
     }
     return dictionary
